@@ -3,21 +3,19 @@ import React, { useState, useEffect } from 'react';
 // const API_BASE_URL = 'http://localhost:3000/api/v1'; // Update to your Express server URL
 const API_BASE_URL = 'https://nine-geosurvey-hub-backend.onrender.com/api/v1'; // Update to your Express server URL
 
-interface Block {
-  id: number;
-  name: string;
-  totalData: number;
-  blockPercentage: number;
-  surveyData: number;
-  surveyPercentage: number;
-  districtId: number;
-}
-
 interface District {
   id: number;
   name: string;
   type: 'RURAL' | 'URBAN';
   serialNo?: number | null;
+}
+
+interface Block {
+  id: number;
+  block_name: string;
+  block_id: number;
+  districtId: number;
+  [key: `c${number}`]: number | null;
 }
 
 const BlockReport: React.FC = () => {
@@ -215,7 +213,7 @@ const BlockReport: React.FC = () => {
             <option value="">-- Choose a Block --</option>
             {blocks.map((block) => (
               <option key={block.id} value={block.id}>
-                {block.name}
+                {block.block_name}
               </option>
             ))}
           </select>
@@ -236,9 +234,9 @@ const BlockReport: React.FC = () => {
 
       {/* Block Details - Shows when block selected */}
       {blockData && (
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          <div className="px-6 py-4 bg-indigo-600">
-            <h3 className="text-xl font-semibold text-white">Block Details: {blockData.name}</h3>
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+          <div className="px-6 py-4 bg-indigo-600 sticky top-0 z-10">
+            <h3 className="text-xl font-semibold text-white">Block Details: {blockData.block_name}</h3>
           </div>
           <div className="px-6 py-4">
             <table className="min-w-full divide-y divide-gray-200">
@@ -249,22 +247,29 @@ const BlockReport: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Data</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{blockData.totalData.toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Block Percentage</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{blockData.blockPercentage.toFixed(2)}%</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Survey Data</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{blockData.surveyData.toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Survey Percentage</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{blockData.surveyPercentage.toFixed(2)}%</td>
-                </tr>
+                {Object.entries(blockData)
+                  .filter(([key]) => key.startsWith('c') && key !== 'c84') // Exclude non-c fields and null-heavy c84 if needed
+                  .sort(([a], [b]) => parseInt(a.slice(1)) - parseInt(b.slice(1))) // Sort by c1, c2, etc.
+                  .map(([key, value]) => (
+                    <tr key={key}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{key}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {value === null || value === undefined ? 'N/A' : (
+                          Number.isInteger(value)
+                            ? value.toLocaleString()
+                            : value.toFixed(2)
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                {blockData.c84 !== null && (
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">c84</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {blockData.c84 === null ? 'N/A' : blockData.c84.toFixed(2)}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
