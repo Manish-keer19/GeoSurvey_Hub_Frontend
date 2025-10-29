@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-const API_BASE_URL = "http://localhost:3000/api/v1/districts";
+// const API_BASE_URL = "http://localhost:3000/api/v1/districts";
+const API_BASE_URL = "https://nine-geosurvey-hub-backend.onrender.com/api/v1/districts";
 
 interface Block {
   bolck_Id: number;
