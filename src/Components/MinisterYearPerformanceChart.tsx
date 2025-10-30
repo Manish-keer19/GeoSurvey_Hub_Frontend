@@ -1,377 +1,220 @@
-// import React, { useEffect, useRef } from 'react';
-// import Chart, { Chart as ChartType } from 'chart.js/auto';
+import React, { useEffect, useRef, useMemo, memo } from 'react';
+import Chart, { Chart as ChartJS } from 'chart.js/auto';
 
-// interface TableRow {
-//   sno: number | string;
-//   type: string;
-//   overall: number;
-//   veryGood: string;
-//   good: string;
-//   less: string;
-//   noResponse: string;
-// }
-
-// const MinisterYearPerformanceChart: React.FC = () => {
-//   const chartRef = useRef<HTMLCanvasElement>(null);
-//   const chartInstanceRef = useRef<ChartType | null>(null);
-
-//   useEffect(() => {
-//     if (chartRef.current) {
-//       const ctx = chartRef.current.getContext('2d');
-//       if (!ctx) return;
-
-//       if (chartInstanceRef.current) {
-//         chartInstanceRef.current.destroy();
-//       }
-
-//       chartInstanceRef.current = new Chart(ctx, {
-//         type: 'pie' as const,
-//         data: {
-//           labels: ['बहुत अच्छा कार्य कर रहे हैं', 'अच्छा कार्य कर रहे हैं', 'कम कार्य कर रहे हैं', 'कोई प्रतिक्रिया नहीं'],
-//           datasets: [{
-//             data: [532, 942, 53, 43],
-//             backgroundColor: [
-//               '#f97316', // Orange for बहुत अच्छा (second largest)
-//               '#ec4899', // Pink for अच्छा (largest)
-//               '#3b82f6', // Blue for कम
-//               '#92400e'  // Brown for कोई प्रतिक्रिया नहीं
-//             ],
-//             borderWidth: 2,
-//             borderColor: '#ffffff'
-//           }]
-//         },
-//         options: {
-//           responsive: true,
-//           maintainAspectRatio: false,
-//           plugins: {
-//             legend: {
-//               display: false // Hide default legend, we'll use custom
-//             },
-//             tooltip: {
-//               callbacks: {
-//                 label: function(context: any) {
-//                   const label = context.label || '';
-//                   const value = context.parsed;
-//                   const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-//                   const percentage = ((value / total) * 100).toFixed(0);
-//                   return `${label}: ${value} (${percentage}%)`;
-//                 }
-//               }
-//             }
-//           }
-//         }
-//       });
-//     }
-
-//     return () => {
-//       if (chartInstanceRef.current) {
-//         chartInstanceRef.current.destroy();
-//       }
-//     };
-//   }, []);
-
-//   const tableData: TableRow[] = [
-//     { sno: 1, type: 'महिला लाभार्थी', overall: 403, veryGood: '162 (40%)', good: '222 (55%)', less: '7 (2%)', noResponse: '12 (3%)' },
-//     { sno: 2, type: 'लाभार्थी के परिवार से', overall: 1167, veryGood: '370 (32%)', good: '720 (62%)', less: '46 (4%)', noResponse: '31 (2%)' },
-//     { sno: '#', type: 'कुल', overall: 1570, veryGood: '532 (34%)', good: '942 (60%)', less: '53 (3%)', noResponse: '43 (3%)' }
-//   ];
-
-//   const headers: string[] = [
-//     'क्र.सं.',
-//     'प्रकार',
-//     'कुल',
-//     'बहुत अच्छा कार्य कर रहे हैं',
-//     'अच्छा कार्य कर रहे हैं',
-//     'कम कार्य कर रहे हैं',
-//     'कोई प्रतिक्रिया नहीं'
-//   ];
-
-//   return (
-//     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg border border-orange-300">
-//       {/* शीर्षक */}
-//       <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">मंत्री जी के एक साल का कार्यकाल</h1>
-
-//       {/* तालिका */}
-//       <div className="overflow-x-auto mb-6">
-//         <table className="min-w-full bg-green-50 border border-gray-300 rounded-md">
-//           <thead>
-//             <tr className="bg-green-100">
-//               {headers.map((header, index) => (
-//                 <th key={index} className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b border-green-200">
-//                   {header}
-//                 </th>
-//               ))}
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {tableData.map((row, index) => (
-//               <tr key={index} className={`bg-white ${index % 2 === 0 ? 'bg-green-50' : 'bg-white'}`}>
-//                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.sno}</td>
-//                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200 font-medium">{row.type}</td>
-//                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.overall}</td>
-//                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.veryGood}</td>
-//                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.good}</td>
-//                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.less}</td>
-//                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.noResponse}</td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       </div>
-
-//       {/* पाई चार्ट कंटेनर */}
-//       <div className="relative h-80 mb-6 bg-green-50 rounded-md p-4 border border-green-200">
-//         <canvas ref={chartRef} />
-//       </div>
-
-//       {/* कस्टम लेजेंड और लेबल */}
-//       <div className="flex flex-col items-center space-y-2 text-sm text-gray-700">
-//         <div className="text-center">
-//           <div className="inline-flex items-center space-x-2 mb-2">
-//             <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-//             <span>बहुत अच्छा कार्य कर रहे हैं: 532; 34%</span>
-//           </div>
-//           <div className="inline-flex items-center space-x-2 mb-2">
-//             <div className="w-4 h-4 bg-pink-500 rounded-full"></div>
-//             <span>अच्छा कार्य कर रहे हैं: 942; 60%</span>
-//           </div>
-//           <div className="inline-flex items-center space-x-2 mb-2">
-//             <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
-//             <span>कम कार्य कर रहे हैं: 53; 3%</span>
-//           </div>
-//           <div className="inline-flex items-center space-x-2">
-//             <div className="w-4 h-4 bg-brown-600 rounded-full"></div>
-//             <span>कोई प्रतिक्रिया नहीं: 43; 3%</span>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default MinisterYearPerformanceChart;
-
-
-
-
-
-import React, { useEffect, useRef, useState } from 'react';
-import Chart, { Chart as ChartType } from 'chart.js/auto';
-
-interface Category {
-  key: 'veryGood' | 'good' | 'less' | 'noResponse';
-  label: string;
-  color: string;
-}
-
-interface DataRow {
-  sno: number | string;
-  type: string;
-  counts: {
-    veryGood: number;
-    good: number;
-    less: number;
-    noResponse: number;
+// === Types ===
+interface ApiData {
+  first?: {
+    c51?: number | string; // veryGood
+    c50?: number | string; // good
+    c52?: number | string; // less
+    c53?: number | string; // noResponse
+  };
+  second?: {
+    c57?: number | string; // veryGood
+    c56?: number | string; // good
+    c58?: number | string; // less
+    c59?: number | string; // noResponse
   };
 }
 
-interface TableRow {
-  sno: number | string;
-  type: string;
-  overall: number;
-  veryGood: string;
-  good: string;
-  less: string;
-  noResponse: string;
+interface MinisterYearPerformanceChartProps {
+  data: ApiData;
 }
 
-const MinisterYearPerformanceChart: React.FC = () => {
+// === Categories (Fixed) ===
+const CATEGORIES = [
+  { key: 'veryGood' as const, label: 'बहुत अच्छा कार्य कर रहे हैं', color: '#f97316' },
+  { key: 'good' as const, label: 'अच्छा कार्य कर रहे हैं', color: '#ec4899' },
+  { key: 'less' as const, label: 'ख़राब कार्य कर रहे हैं', color: '#3b82f6' },
+  { key: 'noResponse' as const, label: 'कोई प्रतिक्रिया नहीं', color: '#92400e' },
+] as const;
+
+// === Safe Number Conversion ===
+const toNumber = (val: any): number => {
+  const num = Number(val);
+  return isNaN(num) || num < 0 ? 0 : Math.floor(num);
+};
+
+// === Main Component ===
+const MinisterYearPerformanceChart: React.FC<MinisterYearPerformanceChartProps> = memo(({ data }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
-  const chartInstanceRef = useRef<ChartType | null>(null);
+  const chartInstanceRef = useRef<ChartJS | null>(null);
 
-  // State for data rows - initialize with defaults; update via setDataRows for backend data
-  const [dataRows] = useState<DataRow[]>([
-    { 
-      sno: 1, 
-      type: 'महिला लाभार्थी', 
-      counts: { veryGood: 162, good: 222, less: 7, noResponse: 12 } 
-    },
-    { 
-      sno: 2, 
-      type: 'लाभार्थी के परिवार से', 
-      counts: { veryGood: 370, good: 720, less: 46, noResponse: 31 } 
-    },
-    { 
-      sno: '#', 
-      type: 'कुल', 
-      counts: { veryGood: 0, good: 0, less: 0, noResponse: 0 } // Total computed dynamically
-    }
-  ]);
+  // === Extract Data ===
+  const rows = useMemo(() => {
+    const first = data.first || {};
+    const second = data.second || {};
 
-  // State for categories - initialize with defaults; update via setCategories if needed
-  const [categories] = useState<Category[]>([
-    { key: 'veryGood', label: 'बहुत अच्छा कार्य कर रहे हैं', color: '#f97316' },
-    { key: 'good', label: 'अच्छा कार्य कर रहे हैं', color: '#ec4899' },
-    { key: 'less', label: 'ख़राब कार्य कर रहे हे', color: '#3b82f6' },
-    { key: 'noResponse', label: 'कोई प्रतिक्रिया नहीं', color: '#92400e' }
-  ]);
+    const row1 = {
+      veryGood: toNumber(first.c51),
+      good: toNumber(first.c50),
+      less: toNumber(first.c52),
+      noResponse: toNumber(first.c53),
+    };
 
-  const title = 'मंत्री जी के एक साल का कार्यकाल'; // Can also be state if dynamic
+    const row2 = {
+      veryGood: toNumber(second.c57),
+      good: toNumber(second.c56),
+      less: toNumber(second.c58),
+      noResponse: toNumber(second.c59),
+    };
 
-  // Example: Placeholder for fetching data from backend (uncomment and adapt as needed)
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const response = await fetch('/api/minister-year-performance'); // Your backend endpoint
-  //       const fetchedData = await response.json();
-  //       setDataRows(fetchedData.rows || []);
-  //       setCategories(fetchedData.categories || categories);
-  //     } catch (error) {
-  //       console.error('Error fetching data:', error);
-  //     }
-  //   };
-  //   fetchData();
-  // }, []);
+    const total = {
+      veryGood: row1.veryGood + row2.veryGood,
+      good: row1.good + row2.good,
+      less: row1.less + row2.less,
+      noResponse: row1.noResponse + row2.noResponse,
+    };
 
-  // Compute totals for chart and legend (excluding total row)
-  const totals = dataRows.reduce((acc, row) => {
-    if (typeof row.sno === 'number') { // Exclude total row if it exists
-      acc.veryGood += row.counts.veryGood;
-      acc.good += row.counts.good;
-      acc.less += row.counts.less;
-      acc.noResponse += row.counts.noResponse;
-    }
-    return acc;
-  }, { veryGood: 0, good: 0, less: 0, noResponse: 0 });
+    return [
+      { sno: 1, type: 'महिला लाभार्थी', counts: row1 },
+      { sno: 2, type: 'लाभार्थी के परिवार से', counts: row2 },
+      { sno: '#', type: 'कुल', counts: total },
+    ] as const;
+  }, [data]);
 
-  const overallTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
+  // === Compute Totals (excluding total row) ===
+  const totals = useMemo(() => {
+    return rows.reduce((acc, row) => {
+      if (typeof row.sno === 'number') {
+        acc.veryGood += row.counts.veryGood;
+        acc.good += row.counts.good;
+        acc.less += row.counts.less;
+        acc.noResponse += row.counts.noResponse;
+      }
+      return acc;
+    }, { veryGood: 0, good: 0, less: 0, noResponse: 0 });
+  }, [rows]);
 
-  // Prepare chart data
-  const chartLabels = categories.map(cat => cat.label);
-  const chartData = categories.map(cat => totals[cat.key]);
-  const chartColors = categories.map(cat => cat.color);
+  const overallTotal = Object.values(totals).reduce((a, b) => a + b, 0);
 
-  // Prepare table data with percentages
-  const tableData: TableRow[] = dataRows.map(row => {
-    let rowCounts = row.counts;
-    let rowTotal = 0;
-    if (typeof row.sno === 'number') {
-      // For non-total rows
-      rowTotal = Object.values(row.counts).reduce((sum, val) => sum + val, 0);
-    } else {
-      // For total row, use grand totals
-      rowCounts = { 
-        veryGood: totals.veryGood,
-        good: totals.good,
-        less: totals.less,
-        noResponse: totals.noResponse
+  // === Table Data with Percentages ===
+  const tableData = useMemo(() => {
+    return rows.map(row => {
+      const isTotalRow = typeof row.sno !== 'number';
+      const counts = isTotalRow ? totals : row.counts;
+      const rowTotal = isTotalRow ? overallTotal : Object.values(row.counts).reduce((a, b) => a + b, 0);
+
+      const percent = (count: number) =>
+        rowTotal > 0 ? ((count / rowTotal) * 100).toFixed(0) : '0';
+
+      return {
+        sno: row.sno,
+        type: row.type,
+        overall: rowTotal,
+        veryGood: `${counts.veryGood} (${percent(counts.veryGood)}%)`,
+        good: `${counts.good} (${percent(counts.good)}%)`,
+        less: `${counts.less} (${percent(counts.less)}%)`,
+        noResponse: `${counts.noResponse} (${percent(counts.noResponse)}%)`,
       };
-      rowTotal = overallTotal;
-    }
+    });
+  }, [rows, totals, overallTotal]);
+
+  // === Chart Data ===
+  const { labels, dataset, colors } = useMemo(() => {
     return {
-      sno: row.sno,
-      type: row.type,
-      overall: rowTotal,
-      veryGood: `${rowCounts.veryGood} (${rowTotal > 0 ? ((rowCounts.veryGood / rowTotal) * 100).toFixed(0) : '0'}%)`,
-      good: `${rowCounts.good} (${rowTotal > 0 ? ((rowCounts.good / rowTotal) * 100).toFixed(0) : '0'}%)`,
-      less: `${rowCounts.less} (${rowTotal > 0 ? ((rowCounts.less / rowTotal) * 100).toFixed(0) : '0'}%)`,
-      noResponse: `${rowCounts.noResponse} (${rowTotal > 0 ? ((rowCounts.noResponse / rowTotal) * 100).toFixed(0) : '0'}%)`,
+      labels: CATEGORIES.map(c => c.label),
+      dataset: CATEGORIES.map(c => totals[c.key]),
+      colors: CATEGORIES.map(c => c.color),
     };
-  });
+  }, [totals]);
 
-  // Headers based on categories
-  const headers: string[] = [
-    'क्र.सं.',
-    'प्रकार',
-    'कुल',
-    ...categories.map(cat => cat.label),
-  ];
-
-  useEffect(() => {
-    if (chartRef.current) {
-      const ctx = chartRef.current.getContext('2d');
-      if (!ctx) return;
-
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-      }
-
-      chartInstanceRef.current = new Chart(ctx, {
-        type: 'pie' as const,
-        data: {
-          labels: chartLabels,
-          datasets: [{
-            data: chartData,
-            backgroundColor: chartColors,
-            borderWidth: 2,
-            borderColor: '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false // Hide default legend, we'll use custom
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context: any) {
-                  const label = context.label || '';
-                  const value = context.parsed;
-                  const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-                  const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
-                  return `${label}: ${value} (${percentage}%)`;
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-
-    return () => {
-      if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-      }
-    };
-  }, [chartLabels, chartData, chartColors]); // Re-run if data changes
-
-  // Custom legend items
-  const legendItems = categories.map(cat => {
+  // === Legend Items ===
+  const legendItems = CATEGORIES.map(cat => {
     const count = totals[cat.key];
-    const percentage = overallTotal > 0 ? ((count / overallTotal) * 100).toFixed(0) : '0';
+    const percent = overallTotal > 0 ? ((count / overallTotal) * 100).toFixed(0) : '0';
     return (
-      <div key={cat.key} className="inline-flex items-center space-x-2 mb-2">
-        <div className={`w-4 h-4 rounded-full`} style={{ backgroundColor: cat.color }}></div>
-        <span>{`${cat.label}: ${count}; ${percentage}%`}</span>
+      <div key={cat.key} className="inline-flex items-center gap-2 text-sm">
+        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: cat.color }} />
+        <span>
+          {cat.label}: <strong>{count}</strong> ({percent}%)
+        </span>
       </div>
     );
   });
 
+  // === Chart Effect ===
+  useEffect(() => {
+    if (!chartRef.current || overallTotal === 0) return;
+
+    const ctx = chartRef.current.getContext('2d');
+    if (!ctx) return;
+
+    chartInstanceRef.current?.destroy();
+
+    chartInstanceRef.current = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [{
+          data: dataset,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const value = ctx.parsed;
+                const percent = overallTotal > 0 ? ((value / overallTotal) * 100).toFixed(1) : '0';
+                return `${ctx.label}: ${value} (${percent}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return () => {
+      chartInstanceRef.current?.destroy();
+      chartInstanceRef.current = null;
+    };
+  }, [labels, dataset, colors, overallTotal]);
+
+  // === Render ===
   return (
     <div className="p-6 max-w-4xl mx-auto bg-white rounded-lg shadow-lg border border-orange-300">
       {/* शीर्षक */}
-      <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">{title}</h1>
+      <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">
+        मंत्री जी के एक साल का कार्यकाल
+      </h1>
 
       {/* तालिका */}
-      <div className="overflow-x-auto mb-6">
-        <table className="min-w-full bg-green-50 border border-gray-300 rounded-md">
+      <div className="overflow-x-auto mb-6 rounded-md border border-gray-300">
+        <table className="min-w-full bg-green-50">
           <thead>
             <tr className="bg-green-100">
-              {headers.map((header, index) => (
-                <th key={index} className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b border-green-200">
-                  {header}
+              {['क्र.सं.', 'प्रकार', 'कुल', ...CATEGORIES.map(c => c.label)].map((h, i) => (
+                <th
+                  key={i}
+                  className="px-4 py-2 text-left text-sm font-semibold text-gray-700 border-b border-green-200"
+                >
+                  {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {tableData.map((row, index) => (
-              <tr key={index} className={`bg-white ${index % 2 === 0 ? 'bg-green-50' : 'bg-white'}`}>
-                <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.sno}</td>
-                <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200 font-medium">{row.type}</td>
-                <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.overall}</td>
+            {tableData.map((row, i) => (
+              <tr
+                key={i}
+                className={`${i % 2 === 0 ? 'bg-green-50' : 'bg-white'} hover:bg-green-100 transition-colors`}
+              >
+                <td className="px-4 py-2 text-sm font-medium text-gray-700 border-b border-green-200">
+                  {row.sno}
+                </td>
+                <td className="px-4 py-2 text-sm font-medium text-gray-700 border-b border-green-200">
+                  {row.type}
+                </td>
+                <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">
+                  {row.overall}
+                </td>
                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.veryGood}</td>
                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.good}</td>
                 <td className="px-4 py-2 text-sm text-gray-700 border-b border-green-200">{row.less}</td>
@@ -384,17 +227,23 @@ const MinisterYearPerformanceChart: React.FC = () => {
 
       {/* पाई चार्ट कंटेनर */}
       <div className="relative h-80 mb-6 bg-green-50 rounded-md p-4 border border-green-200">
-        <canvas ref={chartRef} />
+        {overallTotal === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            <p>कोई डेटा उपलब्ध नहीं</p>
+          </div>
+        ) : (
+          <canvas ref={chartRef} />
+        )}
       </div>
 
-      {/* कस्टम लेजेंड और लेबल */}
-      <div className="flex flex-col items-center space-y-2 text-sm text-gray-700">
-        <div className="text-center">
-          {legendItems}
-        </div>
+      {/* कस्टम लेजेंड */}
+      <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-700">
+        {legendItems}
       </div>
     </div>
   );
-};
+});
+
+MinisterYearPerformanceChart.displayName = 'MinisterYearPerformanceChart';
 
 export default MinisterYearPerformanceChart;

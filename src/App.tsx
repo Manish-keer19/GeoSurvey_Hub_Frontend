@@ -5,6 +5,7 @@
 // import MinisterReachImpactChart from './Components/MinisterReachImpactChart'
 // import MinisterYearPerformanceChart from './Components/MinisterYearPerformanceChart'
 // import SchemeSpendingAndSavingChart from './Components/SchemeInfoMediumChart'
+import Navbar from './Components/Navbar';
 import ReportsPage from './ReportsPage'
 
 
@@ -12,6 +13,7 @@ import ReportsPage from './ReportsPage'
 function App() {
   return (
     <>
+    <Navbar/>
       {/* <EconomicStatusChart/>
       <SchemeSpendingAndSavingChart/>
       <MinisterReachImpactChart/>
