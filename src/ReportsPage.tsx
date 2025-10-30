@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { userService } from "./service/user.service";
 import EconomicStatusChart from "./Components/EconomicStatusChart";
 import SchemeSpendingAndSavingChart from "./Components/SchemeInfoMediumChart";
@@ -7,6 +6,8 @@ import MinisterReachImpactChart from "./Components/MinisterReachImpactChart";
 import MinisterYearPerformanceChart from "./Components/MinisterYearPerformanceChart";
 import CooperativeSchemesAwareness from "./Components/CooperativeSchemesAwareness";
 import BjpGovernmentSatisfactionChart from "./Components/BjpGovernmentSatisfactionChart";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface Block {
   bolck_Id: number;
@@ -18,9 +19,7 @@ interface Block {
 interface District {
   district_id: number;
   district_name: string;
-  districtblockmap?: {
-    block_vd: Block;
-  }[];
+  districtblockmap?: { block_vd: Block }[];
 }
 
 type TabType = "block" | "district" | "loksabha" | "vishansabha";
@@ -35,38 +34,44 @@ const ReportsPage: React.FC = () => {
   const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [blockData, setBlockData] = useState<Block | null>(null);
-  const [showBlockData, setShowBlockData] = useState(false);
+  const [showReport, setShowReport] = useState(false); // Controls report visibility
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDistricts = async () => {
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  // Fetch districts
+  const fetchDistricts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const json = await userService.getAllDistrict();
+      if (!json.success) throw new Error(json.message);
       setDistricts(json.data);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to load districts");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDistricts();
   }, []);
 
   useEffect(() => {
+    fetchDistricts();
+  }, [fetchDistricts]);
+
+  // Filter blocks by type
+  useEffect(() => {
     if (selectedDistrict && allBlocks.length > 0) {
-      if (selectedType === "ALL") {
-        setBlocks(allBlocks);
-      } else {
-        setBlocks(allBlocks.filter((b) => b.Block_Type === selectedType));
-      }
+      const filtered = selectedType === "ALL"
+        ? allBlocks
+        : allBlocks.filter(b => b.Block_Type === selectedType);
+      setBlocks(filtered);
       setSelectedBlock(null);
-      setShowBlockData(false);
+      setShowReport(false); // Hide report when type changes
+      setBlockData(null);
     }
   }, [selectedType, allBlocks, selectedDistrict]);
 
+  // Handle district change
   const handleDistrictChange = async (districtId: number) => {
     try {
       setSelectedDistrict(districtId);
@@ -76,14 +81,12 @@ const ReportsPage: React.FC = () => {
       setAllBlocks([]);
       setBlocks([]);
       setSelectedBlock(null);
-      setShowBlockData(false);
+      setShowReport(false);
+      setBlockData(null);
 
       const json = await userService.getAllBlockByDistrict(districtId);
       if (!json.success) throw new Error(json.message || "Failed to load blocks");
-      const fetchedBlocks = json.data.districtblockmap.map(
-        (db: any) => db.block_vd
-      ) as Block[];
-
+      const fetchedBlocks = json.data.districtblockmap.map((db: any) => db.block_vd) as Block[];
       setAllBlocks(fetchedBlocks);
     } catch (err: any) {
       setError(err.message);
@@ -92,140 +95,152 @@ const ReportsPage: React.FC = () => {
     }
   };
 
+  // Handle block selection change
+  const handleBlockChange = (blockId: number) => {
+    setSelectedBlock(blockId);
+    setShowReport(false); // Hide report when user picks a new block
+    setBlockData(null);
+  };
+
+  // Handle Submit → Show report immediately
   const handleSubmit = () => {
     if (selectedBlock) {
-      const found = blocks.find((b) => b.bolck_Id === selectedBlock);
-      setBlockData(found || null);
-      setShowBlockData(true);
+      const found = blocks.find(b => b.bolck_Id === selectedBlock);
+      if (found) {
+        setBlockData(found);
+        setShowReport(true); // Show report immediately
+      }
     }
   };
 
+  // Compute summary
   const computeSummary = (data: Block) => {
-    let decimalSum = 0;
-    let decimalCount = 0;
-    let percSum = 0;
-    let percCount = 0;
-
+    let decimalSum = 0, decimalCount = 0, percSum = 0, percCount = 0;
     Object.entries(data).forEach(([key, value]) => {
-      if (key.startsWith("c") && key !== "c84" && value !== null && value !== undefined) {
+      if (key.startsWith("c") && key !== "c84" && value != null) {
         const val = Number(value);
         if (!isNaN(val)) {
-          if (val % 1 !== 0) {
-            if (val >= 0 && val <= 100) {
-              percSum += val;
-              percCount++;
-            }
-          } else {
-            decimalSum += val;
-            decimalCount++;
+          if (val % 1 !== 0 && val >= 0 && val <= 100) {
+            percSum += val; percCount++;
+          } else if (Number.isInteger(val)) {
+            decimalSum += val; decimalCount++;
           }
         }
       }
     });
-
     return { decimalSum, decimalCount, percSum, percCount };
   };
 
   const blockSummary = blockData ? computeSummary(blockData) : null;
 
-  // Responsive tab navigation
-  const TabButton: React.FC<{ 
-    tab: TabType; 
-    currentTab: TabType; 
-    onClick: (tab: TabType) => void;
-    label: string;
-  }> = ({ tab, currentTab, onClick, label }) => (
+  // Download PDF
+  const downloadPDF = async () => {
+    if (!reportRef.current || !blockData) return;
+
+    setLoading(true);
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`${blockData.block_name}_Report.pdf`);
+    } catch (err) {
+      setError("Failed to generate PDF. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tab Button
+  const TabButton: React.FC<{ tab: TabType; label: string }> = ({ tab, label }) => (
     <button
-      onClick={() => onClick(tab)}
-      className={`px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-2 rounded-md font-medium transition-colors text-xs sm:text-sm ${
-        currentTab === tab
-          ? "bg-indigo-600 text-white"
-          : "text-gray-600 hover:text-indigo-600 hover:bg-gray-200"
+      onClick={() => setActiveTab(tab)}
+      className={`px-3 py-2 text-xs sm:text-sm md:text-base font-medium rounded-md transition-all whitespace-nowrap ${
+        activeTab === tab
+          ? "bg-indigo-600 text-white shadow-md"
+          : "text-gray-600 hover:text-indigo-600 hover:bg-gray-100"
       }`}
     >
       {label}
     </button>
   );
 
-  const LoksabhaReportContent = () => (
-   <div className="text-center py-12 sm:py-20">
-      <h2 className="text-xl sm:text-2xl font-semibold text-gray-600">Loksabha Report</h2>
-      <p className="text-gray-500 mt-2 text-sm sm:text-base">Coming Soon...</p>
-    </div>
-  );
-
   const BlockReportContent = () => (
-    <div>
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-2">Select District:</label>
+    <div className="space-y-6 ">
+      {/* District Select */}
+      <div>
+        <label className="block text-sm font-semibold mb-2 text-gray-700">Select District</label>
         <select
-          className="w-full p-2 border rounded-md text-sm sm:text-base"
+          className="w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
           value={selectedDistrict || ""}
           onChange={(e) => handleDistrictChange(Number(e.target.value))}
+          disabled={loading}
         >
-          <option value="">-- Choose a District --</option>
-          {districts.map((d) => (
-            <option key={d.district_id} value={d.district_id}>
-              {d.district_name}
-            </option>
+          <option value="">-- Choose District --</option>
+          {districts.map(d => (
+            <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
           ))}
         </select>
       </div>
 
+      {/* Block Stats */}
       {selectedDistrict && allBlocks.length > 0 && (
-        <div className="mb-6 p-4 bg-blue-50 border rounded-md">
-          <h3 className="text-lg font-medium mb-3 text-indigo-600 text-center">
-            {districts.find(d => d.district_id === selectedDistrict)?.district_name} Block Distribution
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
-            <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-              <p className="text-gray-800 font-semibold text-xs sm:text-sm">Total Blocks</p>
-              <p className="text-xl sm:text-2xl text-indigo-600 font-bold">{allBlocks.length}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+          {[
+            { label: "Total", value: allBlocks.length, color: "indigo" },
+            { label: "Rural", value: allBlocks.filter(b => b.Block_Type === "R").length, color: "green" },
+            { label: "Urban", value: allBlocks.filter(b => b.Block_Type === "U").length, color: "purple" },
+          ].map((stat, i) => (
+            <div key={i} className="text-center p-3 bg-white rounded-lg shadow">
+              <p className="text-gray-600 text-xs sm:text-sm">{stat.label}</p>
+              <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
             </div>
-            <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-              <p className="text-gray-800 font-semibold text-xs sm:text-sm">Rural Blocks</p>
-              <p className="text-xl sm:text-2xl text-green-600 font-bold">{allBlocks.filter(b => b.Block_Type === "R").length}</p>
-            </div>
-            <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-              <p className="text-gray-800 font-semibold text-xs sm:text-sm">Urban Blocks</p>
-              <p className="text-xl sm:text-2xl text-purple-600 font-bold">{allBlocks.filter(b => b.Block_Type === "U").length}</p>
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
+      {/* Block Type */}
       {selectedDistrict && (
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2 text-center">Select Block Type:</label>
-          <div className="flex justify-center gap-2 sm:gap-4 flex-wrap">
-            {["ALL", "R", "U"].map((type) => (
-              <label key={type} className="flex items-center gap-1 sm:gap-2 cursor-pointer text-sm">
-                <input
-                  type="radio"
-                  name="type"
-                  className="w-3 h-3 sm:w-4 sm:h-4"
-                  checked={selectedType === type}
-                  onChange={() => setSelectedType(type as "ALL" | "R" | "U")}
-                />
-                <span className="text-xs sm:text-sm">
-                  {type === "R" ? "Rural" : type === "U" ? "Urban" : "All"}
-                </span>
-              </label>
-            ))}
-          </div>
+        <div className="flex justify-center gap-4 flex-wrap">
+          {(["ALL", "R", "U"] as const).map(type => (
+            <label key={type} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="type"
+                checked={selectedType === type}
+                onChange={() => setSelectedType(type)}
+                className="w-4 h-4 text-indigo-600"
+              />
+              <span className="text-sm font-medium">
+                {type === "ALL" ? "All" : type === "R" ? "Rural" : "Urban"}
+              </span>
+            </label>
+          ))}
         </div>
       )}
 
-      {selectedDistrict && blocks.length > 0 && (
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">Select Block:</label>
+      {/* Block Select */}
+      {blocks.length > 0 && (
+        <div>
+          <label className="block text-sm font-semibold mb-2 text-gray-700">Select Block</label>
           <select
-            className="w-full p-2 border rounded-md text-sm sm:text-base"
+            className="w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
             value={selectedBlock || ""}
-            onChange={(e) => setSelectedBlock(Number(e.target.value))}
+            onChange={(e) => handleBlockChange(Number(e.target.value))}
           >
-            <option value="">-- Choose a Block --</option>
-            {blocks.map((b) => (
+            <option value="">-- Choose Block --</option>
+            {blocks.map(b => (
               <option key={b.bolck_Id} value={b.bolck_Id}>
                 {b.block_name} ({b.Block_Type})
               </option>
@@ -234,247 +249,114 @@ const ReportsPage: React.FC = () => {
         </div>
       )}
 
+      {/* Submit Button */}
       {selectedBlock && (
-        <div className="mb-6 text-center">
+        <div className="text-center">
           <button
             onClick={handleSubmit}
-            className="bg-indigo-600 text-white px-4 py-2 sm:px-6 sm:py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200 text-sm sm:text-base w-full sm:w-auto"
+            className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-all font-medium"
+            disabled={loading}
           >
-            Submit
+            Submit & View Report
           </button>
         </div>
       )}
 
-      {showBlockData && blockData && (
-        <div className="mt-6 sm:mt-8 border-t pt-4">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-indigo-600">
-            Block Details: {blockData.block_name}
-          </h2>
-          <div className="overflow-x-auto mb-6 -mx-2 sm:mx-0">
-            <div className="min-w-full inline-block align-middle">
-              <table className="min-w-full border border-gray-200 text-xs sm:text-sm">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="px-2 py-1 sm:px-4 sm:py-2 text-left font-medium text-gray-700">Attribute</th>
-                    <th className="px-2 py-1 sm:px-4 sm:py-2 text-left font-medium text-gray-700">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(blockData)
-                    .filter(([k]) => k.startsWith("c"))
-                    .sort(([a], [b]) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
-                    .map(([key, value]) => (
-                      <tr key={key} className="border-t even:bg-gray-50">
-                        <td className="px-2 py-1 sm:px-4 sm:py-2 text-gray-600 font-medium">{key}</td>
-                        <td className="px-2 py-1 sm:px-4 sm:py-2 text-gray-800">{value ?? "N/A"}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+      {/* Report Content */}
+      {showReport && blockData && (
+        <div ref={reportRef} className="space-y-8 bg-white p-6 rounded-xl shadow-lg border">
+          <div className="text-center border-b pb-4">
+            <h2 className="text-2xl font-bold text-indigo-700">{blockData.block_name} - Analytics Report</h2>
+            <p className="text-gray-600">Generated on {new Date().toLocaleDateString()}</p>
           </div>
 
-          
+          {/* Summary */}
           {blockSummary && (
-            <div className="p-3 sm:p-4 bg-gray-50 border rounded-md">
-              <h3 className="text-base sm:text-lg font-semibold mb-3 text-indigo-600">Block Summary</h3>
-              <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
-                <p className="text-gray-800">
-                  <strong>Total Decimal Value:</strong> {blockSummary.decimalSum.toLocaleString()} (from {blockSummary.decimalCount} columns)
-                </p>
-                <p className="text-gray-800">
-                  <strong>Total Percentage:</strong> {blockSummary.percSum.toFixed(2)}% (from {blockSummary.percCount} columns)
-                </p>
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg">
+              <h3 className="font-bold text-indigo-700 mb-2">Summary</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <p><strong>Decimal Sum:</strong> {blockSummary.decimalSum.toLocaleString()} ({blockSummary.decimalCount} fields)</p>
+                <p><strong>Percentage Sum:</strong> {blockSummary.percSum.toFixed(2)}% ({blockSummary.percCount} fields)</p>
               </div>
             </div>
           )}
-            {typeof blockData.c20 !== "undefined" && (
-      <EconomicStatusChart
-        data={{
-         first:{ c20: Number(blockData.c20),
-                c21: Number(blockData.c21),
-                c22: Number(blockData.c22),
-                c23: Number(blockData.c23),
-         },
-         second:{ 
-                  c25: Number(blockData.c25),
-                  c26: Number(blockData.c26),
-                  c27: Number(blockData.c27),
-                  c28: Number(blockData.c28),
-        }
-       
-      }  
-      }
-      />
 
-      
-    )}
-    {
-      <SchemeSpendingAndSavingChart
-  data={{
-    first: {
-      c31: Number(blockData.c31), // हाँ
-      c30: Number(blockData.c30), // परिवार के साथ
-      c33: Number(blockData.c33), // नहीं
-      c32: Number(blockData.c32), // कभी-कभी
-    },
-    second: {
-      c35: Number(blockData.c35), // हाँ
-      c38: Number(blockData.c38), // सोच रही हूँ
-      c36:  Number(blockData.c36),  // नहीं
-      c37: Number(blockData.c37), // पहले से बचत
-    },
-  }}
-/>
-    }
-    {
-      <MinisterReachImpactChart
-  data={{
-    first: {
-      c40: Number(blockData.c40), // correctName
-      c41: Number(blockData.c41), // wrongName
-      c42: Number(blockData.c42), // notKnow
-      c43: Number(blockData.c43), // noResponse
-    },
-    second: {
-      c45: Number(blockData.c45), // correctName
-      c46: Number(blockData.c46), // wrongName
-      c47: Number(blockData.c47), // notKnow
-      c48: Number(blockData.c48), // noResponse
-    },
-  }}
-/>
-    }
-    {
-      <MinisterYearPerformanceChart
-  data={{
-    first: {
-      c51: Number(blockData.c51), // बहुत अच्छा
-      c50: Number(blockData.c50), // अच्छा
-      c52: Number(blockData.c52), // ख़राब
-      c53: Number(blockData.c53), // कोई प्रतिक्रिया नहीं
-    },
-    second: {
-      c57: Number(blockData.c57), // बहुत अच्छा
-      c56: Number(blockData.c56), // अच्छा
-      c58: Number(blockData.c58), // ख़राब
-      c59: Number(blockData.c59), // कोई प्रतिक्रिया नहीं
-    },
-  }}
-/>
-    }
+          {/* Charts */}
+          <div className="space-y-12">
+            {blockData.c20 !== undefined && <EconomicStatusChart data={{
+              first: { c20: Number(blockData.c20), c21: Number(blockData.c21), c22: Number(blockData.c22), c23: Number(blockData.c23) },
+              second: { c25: Number(blockData.c25), c26: Number(blockData.c26), c27: Number(blockData.c27), c28: Number(blockData.c28) }
+            }} />}
 
-    {
-      <CooperativeSchemesAwareness
-  data={{
-    first: {
-      c63: Number(blockData.c63), // अखबार/विज्ञापन
-      c62: Number(blockData.c62), // सोशल मीडिया
-      c65: Number(blockData.c65), // सरकारी कर्मचारी
-      c64: Number(blockData.c64), // परिवार
-      c66: Number(blockData.c66), // कोई जानकारी नहीं
-    },
-    second: {
-      c69: Number(blockData.c69),
-      c68: Number(blockData.c68),
-      c71: Number(blockData.c71),
-      c70: Number(blockData.c70),
-      c72: Number(blockData.c72),
-    },
-  }}
-/>
-    }
+            <SchemeSpendingAndSavingChart data={{
+              first: { c31: Number(blockData.c31), c30: Number(blockData.c30), c33: Number(blockData.c33), c32: Number(blockData.c32) },
+              second: { c35: Number(blockData.c35), c38: Number(blockData.c38), c36: Number(blockData.c36), c37: Number(blockData.c37) }
+            }} />
 
-    {<BjpGovernmentSatisfactionChart
-  data={{
-    first: {
-      c75: Number(blockData.c75), // कुछ हद तक संतुष्ट
-      c74: Number(blockData.c74), // पूरी तरह से संतुष्ट
-      c77: Number(blockData.c77), // कुछ हद तक असंतुष्ट
-      c76: Number(blockData.c76), // पूरी तरह से असंतुष्ट
-    },
-    second: {
-      c80: Number(blockData.c80),
-      c79: Number(blockData.c79),
-      c82: Number(blockData.c82),
-      c81: Number(blockData.c81),
-    },
-  }}
-/>
+            <MinisterReachImpactChart data={{
+              first: { c40: Number(blockData.c40), c41: Number(blockData.c41), c42: Number(blockData.c42), c43: Number(blockData.c43) },
+              second: { c45: Number(blockData.c45), c46: Number(blockData.c46), c47: Number(blockData.c47), c48: Number(blockData.c48) }
+            }} />
 
-    }
+            <MinisterYearPerformanceChart data={{
+              first: { c51: Number(blockData.c51), c50: Number(blockData.c50), c52: Number(blockData.c52), c53: Number(blockData.c53) },
+              second: { c57: Number(blockData.c57), c56: Number(blockData.c56), c58: Number(blockData.c58), c59: Number(blockData.c59) }
+            }} />
 
+            <CooperativeSchemesAwareness data={{
+              first: { c63: Number(blockData.c63), c62: Number(blockData.c62), c65: Number(blockData.c65), c64: Number(blockData.c64), c66: Number(blockData.c66) },
+              second: { c69: Number(blockData.c69), c68: Number(blockData.c68), c71: Number(blockData.c71), c70: Number(blockData.c70), c72: Number(blockData.c72) }
+            }} />
+
+            <BjpGovernmentSatisfactionChart data={{
+              first: { c75: Number(blockData.c75), c74: Number(blockData.c74), c77: Number(blockData.c77), c76: Number(blockData.c76) },
+              second: { c80: Number(blockData.c80), c79: Number(blockData.c79), c82: Number(blockData.c82), c81: Number(blockData.c81) }
+            }} />
+          </div>
+
+          {/* PDF Button */}
+          <div className="text-center pt-6 border-t">
+            <button
+              onClick={downloadPDF}
+              disabled={loading}
+              className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition-all font-medium flex items-center gap-2 mx-auto disabled:opacity-50"
+            >
+              Download PDF
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 
-  const DistrictReportContent = () => (
-    <div className="text-center py-12 sm:py-20">
-      <h2 className="text-xl sm:text-2xl font-semibold text-gray-600">District Report</h2>
-      <p className="text-gray-500 mt-2 text-sm sm:text-base">Coming Soon...</p>
-    </div>
-  );
-
-  const VishansabhaReportContent = () => (
-    <div className="text-center py-12 sm:py-20">
-      <h2 className="text-xl sm:text-2xl font-semibold text-gray-600">Vishansabha Report</h2>
-      <p className="text-gray-500 mt-2 text-sm sm:text-base">Coming Soon...</p>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 sm:pt-28 md:pt-32 pb-6 sm:pb-10 px-3 sm:px-6">
-      <div className="max-w-5xl mx-auto bg-white shadow-md rounded-lg p-4 sm:p-6 md:p-8">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-4 sm:mb-6 text-indigo-700">
-          Reports Dashboard
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8 mt-[12vh]  md:mt-[20vh]">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8 text-indigo-700">
+            Reports Dashboard
+          </h1>
 
-        {/* Responsive Tab Navigation */}
-        <div className="flex justify-center mb-6 sm:mb-8">
-          <div className="flex bg-gray-100 rounded-lg p-1 overflow-x-auto w-full max-w-md sm:max-w-full">
-            <TabButton 
-              tab="block" 
-              currentTab={activeTab} 
-              onClick={setActiveTab}
-              label="Block Report"
-            />
-            <TabButton 
-              tab="district" 
-              currentTab={activeTab} 
-              onClick={setActiveTab}
-              label="District Report"
-            />
-            
-            <TabButton 
-              tab="vishansabha" 
-              currentTab={activeTab} 
-              onClick={setActiveTab}
-              label="Vishansabha Report"
-            />
-            <TabButton 
-              tab="loksabha" 
-              currentTab={activeTab} 
-              onClick={setActiveTab}
-              label="Loksabha Report"
-            />
+          {/* Tabs */}
+          <div className="flex flex-wrap justify-center gap-2 mb-8 bg-gray-100 p-2 rounded-xl">
+            <TabButton tab="block" label="Block" />
+            <TabButton tab="district" label="District" />
+            <TabButton tab="vishansabha" label="Vidhan Sabha" />
+            <TabButton tab="loksabha" label="Lok Sabha" />
           </div>
-        </div>
 
-        {/* Tab Content */}
-        <div className="tab-content">
-          {activeTab === "block" && <BlockReportContent />}
-          {activeTab === "district" && <DistrictReportContent />}
-          {activeTab === "loksabha" && <LoksabhaReportContent />}
-          {activeTab === "vishansabha" && <VishansabhaReportContent />}
-        </div>
+          {/* Content */}
+          <div className="min-h-[400px]">
+            {activeTab === "block" && <BlockReportContent />}
+            {activeTab === "district" && <div className="text-center py-20 text-gray-500">Coming Soon...</div>}
+            {activeTab === "vishansabha" && <div className="text-center py-20 text-gray-500">Coming Soon...</div>}
+            {activeTab === "loksabha" && <div className="text-center py-20 text-gray-500">Coming Soon...</div>}
+          </div>
 
-        {loading && (
-          <div className="text-center mt-6 text-indigo-500 text-sm sm:text-base">Loading...</div>
-        )}
-        {error && (
-          <div className="text-center mt-6 text-red-500 text-sm sm:text-base">Error: {error}</div>
-        )}
+          {/* Global Messages */}
+          {loading && <p className="text-center text-indigo-600 mt-6">Loading...</p>}
+          {error && <p className="text-center text-red-600 mt-6">Error: {error}</p>}
+        </div>
       </div>
     </div>
   );
