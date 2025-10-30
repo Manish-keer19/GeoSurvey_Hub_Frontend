@@ -34,7 +34,7 @@ const ReportsPage: React.FC = () => {
   const [selectedBlock, setSelectedBlock] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [blockData, setBlockData] = useState<Block | null>(null);
-  const [showReport, setShowReport] = useState(false); // Controls report visibility
+  const [showReport, setShowReport] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reportRef = useRef<HTMLDivElement>(null);
@@ -66,7 +66,7 @@ const ReportsPage: React.FC = () => {
         : allBlocks.filter(b => b.Block_Type === selectedType);
       setBlocks(filtered);
       setSelectedBlock(null);
-      setShowReport(false); // Hide report when type changes
+      setShowReport(false);
       setBlockData(null);
     }
   }, [selectedType, allBlocks, selectedDistrict]);
@@ -98,7 +98,7 @@ const ReportsPage: React.FC = () => {
   // Handle block selection change
   const handleBlockChange = (blockId: number) => {
     setSelectedBlock(blockId);
-    setShowReport(false); // Hide report when user picks a new block
+    setShowReport(false);
     setBlockData(null);
   };
 
@@ -108,7 +108,7 @@ const ReportsPage: React.FC = () => {
       const found = blocks.find(b => b.bolck_Id === selectedBlock);
       if (found) {
         setBlockData(found);
-        setShowReport(true); // Show report immediately
+        setShowReport(true);
       }
     }
   };
@@ -176,8 +176,19 @@ const ReportsPage: React.FC = () => {
     </button>
   );
 
+  // Loader Component
+  const Loader = () => (
+    <div className="flex flex-col items-center justify-center py-16 space-y-4">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-indigo-200 rounded-full animate-spin"></div>
+        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-indigo-600 rounded-full animate-spin border-t-transparent"></div>
+      </div>
+      <p className="text-indigo-600 font-medium animate-pulse">Loading data, please wait...</p>
+    </div>
+  );
+
   const BlockReportContent = () => (
-    <div className="space-y-6 ">
+    <div className="space-y-6">
       {/* District Select */}
       <div>
         <label className="block text-sm font-semibold mb-2 text-gray-700">Select District</label>
@@ -194,8 +205,11 @@ const ReportsPage: React.FC = () => {
         </select>
       </div>
 
+      {/* Show loader when fetching blocks */}
+      {loading && selectedDistrict && <Loader />}
+
       {/* Block Stats */}
-      {selectedDistrict && allBlocks.length > 0 && (
+      {selectedDistrict && allBlocks.length > 0 && !loading && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
           {[
             { label: "Total", value: allBlocks.length, color: "indigo" },
@@ -211,7 +225,7 @@ const ReportsPage: React.FC = () => {
       )}
 
       {/* Block Type */}
-      {selectedDistrict && (
+      {selectedDistrict && allBlocks.length > 0 && !loading && (
         <div className="flex justify-center gap-4 flex-wrap">
           {(["ALL", "R", "U"] as const).map(type => (
             <label key={type} className="flex items-center gap-2 cursor-pointer">
@@ -231,7 +245,7 @@ const ReportsPage: React.FC = () => {
       )}
 
       {/* Block Select */}
-      {blocks.length > 0 && (
+      {blocks.length > 0 && !loading && (
         <div>
           <label className="block text-sm font-semibold mb-2 text-gray-700">Select Block</label>
           <select
@@ -250,7 +264,7 @@ const ReportsPage: React.FC = () => {
       )}
 
       {/* Submit Button */}
-      {selectedBlock && (
+      {selectedBlock && !loading && (
         <div className="text-center">
           <button
             onClick={handleSubmit}
@@ -321,7 +335,7 @@ const ReportsPage: React.FC = () => {
               disabled={loading}
               className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition-all font-medium flex items-center gap-2 mx-auto disabled:opacity-50"
             >
-              Download PDF
+              {loading ? "Generating PDF..." : "Download PDF"}
             </button>
           </div>
         </div>
@@ -330,7 +344,7 @@ const ReportsPage: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8 mt-[12vh]  md:mt-[20vh]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8 mt-[12vh] md:mt-[20vh]">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-center mb-8 text-indigo-700">
@@ -338,7 +352,7 @@ const ReportsPage: React.FC = () => {
           </h1>
 
           {/* Tabs */}
-          <div className="flex flex-wrap justify-center gap-2 mb-8 bg-gray-100 p-2 rounded-xl">
+          <div className="flex flex-wrap justify-center gap-2 mb-8 bg-gray-100 p-2 rounded-xl w-fit mx-auto">
             <TabButton tab="block" label="Block" />
             <TabButton tab="district" label="District" />
             <TabButton tab="vishansabha" label="Vidhan Sabha" />
@@ -347,15 +361,18 @@ const ReportsPage: React.FC = () => {
 
           {/* Content */}
           <div className="min-h-[400px]">
-            {activeTab === "block" && <BlockReportContent />}
+            {activeTab === "block" && (
+              <>
+                {loading && districts.length === 0 ? <Loader /> : <BlockReportContent />}
+              </>
+            )}
             {activeTab === "district" && <div className="text-center py-20 text-gray-500">Coming Soon...</div>}
             {activeTab === "vishansabha" && <div className="text-center py-20 text-gray-500">Coming Soon...</div>}
             {activeTab === "loksabha" && <div className="text-center py-20 text-gray-500">Coming Soon...</div>}
           </div>
 
           {/* Global Messages */}
-          {loading && <p className="text-center text-indigo-600 mt-6">Loading...</p>}
-          {error && <p className="text-center text-red-600 mt-6">Error: {error}</p>}
+          {error && <p className="text-center text-red-600 mt-6">{error}</p>}
         </div>
       </div>
     </div>

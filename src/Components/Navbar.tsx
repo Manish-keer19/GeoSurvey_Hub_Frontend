@@ -10,18 +10,21 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-orange-500 px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 flex justify-between items-center shadow-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       {/* BJP Logo - Responsive */}
-      <div className="flex-shrink-0">
+      <div className="flex flex-row gap-5">
         <img
           src={Logo}
           alt="BJP Logo"
-          className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 object-contain transition-all duration-300"
+          className="w-12 h-12  object-contain transition-all duration-300"
         />
-      </div>
 
+        
       {/* Title - Responsive & Centered */}
-      <h1 className="text-white font-bold text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl mx-auto text-center flex-1 px-2 line-clamp-1">
+     
+         <h1 className="text-white font-bold text-base xs:text-lg sm:text-xl md:text-2xl mx-auto text-center flex-1 px-2 line-clamp-1">
         Mahatari Vandan Yojana
       </h1>
+      </div>
+
 
       {/* Logout Button - Responsive */}
       <button
