@@ -2,7 +2,6 @@ import { useState } from "react";
 import { BlockReportPage } from "./BlockReportPage";    
 import { DistrictReportPage } from "./DistrictReportPage";
 import { FullPageLoader } from "./LoaderComponents";
-import { ErrorMessage } from "./ErrorComponents";
 type Tab = "block" | "district" | "vidhansabha" | "loksabha";
 
 const tabLabels: Record<Tab, string> = {
@@ -15,21 +14,14 @@ const tabLabels: Record<Tab, string> = {
 export default function ReportsDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("block");
   const [loadingTab, setLoadingTab] = useState(false);
-  const [tabError, setTabError] = useState<string | null>(null);
 
   const TabButton = ({ tab }: { tab: Tab }) => {
     const handleTabClick = () => {
       if (tab !== activeTab) {
         setLoadingTab(true);
-        setTabError(null);
         setTimeout(() => {
-          try {
-            setActiveTab(tab);
-          } catch (err) {
-            setTabError("Failed to load report section");
-          } finally {
-            setLoadingTab(false);
-          }
+          setActiveTab(tab);
+          setLoadingTab(false);
         }, 300);
       }
     };
@@ -62,14 +54,6 @@ export default function ReportsDashboard() {
         <div className="min-h-[500px]">
           {loadingTab ? (
             <FullPageLoader message="Loading report section..." />
-          ) : tabError ? (
-            <ErrorMessage 
-              message={tabError} 
-              onRetry={() => {
-                setTabError(null);
-                setActiveTab(activeTab);
-              }} 
-            />
           ) : (
             <>
               {activeTab === "block" && <BlockReportPage />}

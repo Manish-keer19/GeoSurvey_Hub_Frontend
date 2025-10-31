@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import Logo from "../assets/bjp_logo.png";
 import HeaderImage from "../assets/mahatari_header.jpg";
-import { Mail, Phone, Globe, ChevronDown } from "lucide-react";
+import { Mail, Phone, Globe, ChevronDown, Menu, X } from "lucide-react";
 
 const Navbar: React.FC = () => {
   const [language, setLanguage] = useState<"EN" | "HI">("EN");
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     console.log("Logout clicked");
@@ -16,29 +17,33 @@ const Navbar: React.FC = () => {
       {/* ───── TOP BAR ───── */}
       <div className="bg-orange-100 text-orange-800 text-xs sm:text-sm font-medium px-3 sm:px-6 py-1.5 flex justify-between items-center shadow-sm fixed top-0 left-0 right-0 z-50 w-full">
         {/* Left: Email + Helpline */}
-        <div className="flex items-center gap-3 sm:gap-6 overflow-hidden">
-          <div className="flex items-center gap-1">
-            <Mail className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate max-w-[100px] sm:max-w-none">
+        <div className="flex items-center gap-2 sm:gap-6 overflow-hidden flex-1">
+          <div className="flex items-center gap-1 min-w-0">
+            <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="truncate hidden xs:inline-block max-w-[120px] sm:max-w-none">
               dirwcd.cg@gov.in
             </span>
           </div>
-          <div className="flex items-center gap-1">
-            <Phone className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">हेल्प डेस्क: +91-771-2220006</span>
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+            <span className="truncate text-xs sm:text-sm">
+              हेल्प डेस्क: +91-771-2220006
+            </span>
           </div>
         </div>
 
         {/* Right: Language Dropdown */}
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 ml-2">
           <button
             onClick={() => setIsLangOpen(!isLangOpen)}
-            className="flex items-center gap-1 hover:text-orange-600 transition-colors"
+            className="flex items-center gap-1 hover:text-orange-600 transition-colors text-xs sm:text-sm"
           >
-            <Globe className="w-4 h-4" />
-            <span>{language === "EN" ? "English" : "हिन्दी"}</span>
+            <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">
+              {language === "EN" ? "English" : "हिन्दी"}
+            </span>
             <ChevronDown
-              className={`w-4 h-4 transition-transform duration-200 ${
+              className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${
                 isLangOpen ? "rotate-180" : ""
               }`}
             />
@@ -78,27 +83,47 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* ───── MAIN NAVBAR ───── */}
-      <nav className="bg-orange-500 px-3 sm:px-6 py-2 sm:py-3 flex flex-wrap sm:flex-nowrap justify-between items-center shadow-md fixed top-[32px] sm:top-[36px] left-0 right-0 z-40 w-full border-t border-orange-200">
-        <div className="flex flex-wrap sm:flex-nowrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center w-full sm:w-auto">
-          <img
-            src={Logo}
-            alt="BJP Logo"
-            className="w-9 h-9 sm:w-11 sm:h-11 object-contain"
-          />
-          <img
-            src={HeaderImage}
-            alt="Mahatari Header"
-            className="h-9 sm:h-11 md:h-14 object-contain"
-          />
-          <h1 className="text-white font-bold text-base sm:text-xl md:text-2xl leading-tight w-full sm:w-auto">
-            Mahatari Vandan Yojana
-          </h1>
+      <nav className="bg-orange-500 flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-6 lg:px-8 py-2 sm:py-3 fixed top-7 sm:top-9 left-0 right-0 z-40 shadow-md">
+        {/* Left: Logo and Branding */}
+        <div className="flex items-center justify-between w-full sm:w-auto">
+          <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+            <img
+              src={Logo}
+              alt="BJP Logo"
+              className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 object-contain"
+            />
+            <img
+              src={HeaderImage}
+              alt="Mahatari Header"
+              className="h-8 sm:h-10 lg:h-12 object-contain hidden xs:block"
+            />
+            <h1 className="text-white text-sm sm:text-lg lg:text-xl font-semibold whitespace-nowrap">
+              Mahatari Vandan Yojana
+            </h1>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="sm:hidden text-white p-1"
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
-        <div className="flex justify-center sm:justify-end w-full sm:w-auto mt-2 sm:mt-0">
+        {/* Right: Navigation Actions - Only Logout Button */}
+        <div
+          className={`w-full sm:w-auto mt-2 sm:mt-0 ${
+            isMobileMenuOpen ? "flex" : "hidden sm:flex"
+          } justify-end pb-2 sm:pb-0 border-t border-orange-400 sm:border-none pt-2 sm:pt-0`}
+        >
           <button
             onClick={handleLogout}
-            className="bg-white text-orange-500 font-semibold rounded-md shadow-md hover:bg-orange-50 transition-all px-4 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm md:text-base"
+            className="bg-white text-orange-500 font-semibold rounded-md shadow-md hover:bg-orange-50 transition-all px-4 py-2 text-xs sm:text-sm w-full sm:w-auto text-center"
           >
             Logout
           </button>
@@ -106,7 +131,7 @@ const Navbar: React.FC = () => {
       </nav>
 
       {/* ───── SPACER (ensures no content overlap) ───── */}
-      <div className="h-[105px] sm:h-[115px] md:h-[130px]" />
+      <div className="h-[140px] sm:h-[115px] md:h-[130px]" />
     </>
   );
 };
