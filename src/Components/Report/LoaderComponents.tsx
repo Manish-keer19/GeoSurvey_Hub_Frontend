@@ -97,8 +97,8 @@ export const DistrictFetchingLoader: React.FC = () => (
 
 // Block fetching loader
 export const BlockFetchingLoader: React.FC = () => (
-  <div className="flex items-center justify-center py-8">
-    <div className="text-center">
+  <div className="w-full flex items-center justify-center py-12">
+    <div className="text-center border justify-center flex flex-col items-center p-6 bg-gray-50 rounded-lg">
       <Spinner size="lg" />
       <p className="text-indigo-600 font-medium mt-4">Loading blocks...</p>
       <p className="text-gray-500 text-sm mt-2">Fetching blocks for selected district</p>

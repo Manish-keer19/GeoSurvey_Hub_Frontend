@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // const API_BASE_URL = "http://localhost:3000";
-// const API_BASE_URL = "https://spring-chat-application.onrender.com";
 const API_BASE_URL = "https://nine-geosurvey-hub-backend.onrender.com";
+// const API_BASE_URL = "https://spring-chat-application.onrender.com";
 
 
 // Create an Axios instance

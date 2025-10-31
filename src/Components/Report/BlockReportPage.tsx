@@ -313,12 +313,6 @@
 
 
 
-
-
-
-
-
-
 import React, { useState, useRef, useMemo } from "react";
 import { userService } from "../../service/user.service";
 import { DistrictSelect } from "./DistrictSelect";
