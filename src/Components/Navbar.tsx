@@ -1,15 +1,25 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../assets/bjp_logo.png";
 import HeaderImage from "../assets/mahatari_header.jpg";
-import { Mail, Phone, Globe, ChevronDown, Menu, X } from "lucide-react";
+import { Mail, Phone, Globe, ChevronDown, Menu, X, User, LogOut } from "lucide-react";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import { logout } from "../store/authSlice";
+import { toast } from "react-hot-toast";
 
 const Navbar: React.FC = () => {
   const [language, setLanguage] = useState<"EN" | "HI">("EN");
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    console.log("Logout clicked");
+    dispatch(logout());
+    toast.success('Logged out successfully');
+    navigate('/login');
   };
 
   return (
@@ -115,18 +125,48 @@ const Navbar: React.FC = () => {
           </button>
         </div>
 
-        {/* Right: Navigation Actions - Only Logout Button */}
+        {/* Right: User Menu or Login Button */}
         <div
           className={`w-full sm:w-auto mt-2 sm:mt-0 ${
             isMobileMenuOpen ? "flex" : "hidden sm:flex"
           } justify-end pb-2 sm:pb-0 border-t border-orange-400 sm:border-none pt-2 sm:pt-0`}
         >
-          <button
-            onClick={handleLogout}
-            className="bg-white text-orange-500 font-semibold rounded-md shadow-md hover:bg-orange-50 transition-all px-4 py-2 text-xs sm:text-sm w-full sm:w-auto text-center"
-          >
-            Logout
-          </button>
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="bg-white text-orange-500 font-semibold rounded-md shadow-md hover:bg-orange-50 transition-all px-4 py-2 text-xs sm:text-sm flex items-center gap-2"
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">{user?.name}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              <div className={`absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg transition-all duration-200 z-50 origin-top-right ${
+                isUserMenuOpen ? "opacity-100 visible scale-100" : "opacity-0 invisible scale-95"
+              }`}>
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+                  <p className="text-xs text-gray-500">Code: {user?.code}</p>
+                  <p className="text-xs text-gray-500">{user?.role}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              className="bg-white text-orange-500 font-semibold rounded-md shadow-md hover:bg-orange-50 transition-all px-4 py-2 text-xs sm:text-sm w-full sm:w-auto text-center"
+            >
+              Login
+            </button>
+          )}
         </div>
       </nav>
 
