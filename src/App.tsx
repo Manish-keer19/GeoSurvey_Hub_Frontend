@@ -6,7 +6,8 @@
 // import MinisterYearPerformanceChart from './Components/MinisterYearPerformanceChart'
 // import SchemeSpendingAndSavingChart from './Components/SchemeInfoMediumChart'
 import Navbar from './Components/Navbar';
-import ReportsPage from './ReportsPage'
+import ReportsDashboard from './Components/Report/ReportsDashboard';
+// import ReportsPage from './ReportsPage'
 
 
 
@@ -20,7 +21,8 @@ function App() {
       <MinisterYearPerformanceChart/>
       <CooperativeSchemesAwareness/>
       <BjpGovernmentSatisfactionChart/> */}
-      <ReportsPage/>
+      {/* <ReportsPage/> */}
+      <ReportsDashboard/>
     </>
   );
 }
