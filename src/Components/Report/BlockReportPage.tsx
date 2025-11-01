@@ -92,7 +92,12 @@ export const BlockReportPage: React.FC = () => {
   const groupedBlockNames = useMemo(() => {
     const map = new Map<string, Block[]>();
     filteredBlocks.forEach(b => {
-      const cleanName = b.block_name.replace(/\s*\([RU]\)$/, "").trim();
+      // Normalize block name: remove (R)/(U), convert to uppercase, trim spaces
+      const cleanName = b.block_name
+        .replace(/\s*\([RU]\)$/, "")
+        .trim()
+        .toUpperCase();
+      
       if (!map.has(cleanName)) map.set(cleanName, []);
       map.get(cleanName)!.push(b);
     });
@@ -114,7 +119,7 @@ export const BlockReportPage: React.FC = () => {
       } else {
         // Call getBlockById API for R or U blocks
         const selectedBlock = filteredBlocks.find(b => 
-          b.block_name.replace(/\s*\([RU]\)$/, "").trim() === selectedBlockName
+          b.block_name.replace(/\s*\([RU]\)$/, "").trim().toUpperCase() === selectedBlockName
         );
         
         if (!selectedBlock) {
