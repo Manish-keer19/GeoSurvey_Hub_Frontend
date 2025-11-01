@@ -398,6 +398,8 @@ import CooperativeSchemesAwareness from "./Components/CooperativeSchemesAwarenes
 import BjpGovernmentSatisfactionChart from "./Components/BjpGovernmentSatisfactionChart";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 interface Block {
   bolck_Id: number;
@@ -422,6 +424,8 @@ interface DistrictReport {
 type TabType = "block" | "district";
 
 const ReportsPage: React.FC = () => {
+
+  const token = useSelector((state: any) => state.auth.token);
   const [activeTab, setActiveTab] = useState<TabType>("block");
   const [districts, setDistricts] = useState<District[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -441,8 +445,13 @@ const ReportsPage: React.FC = () => {
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
+
+      if(!token){
+        toast.error("token not found");
+        return;
+      }
       try {
-        const res = await userService.getAllDistrict();
+        const res = await userService.getAllDistrict(token);
         if (res.success) setDistricts(res.data);
       } catch (e: any) {
         setError(e.message);
@@ -461,7 +470,7 @@ const ReportsPage: React.FC = () => {
     setBlocks([]);
     setLoading(true);
     try {
-      const res = await userService.getDistrictMeta(districtId);
+      const res = await userService.getDistrictMeta(districtId,token);
       if (res.success) setBlocks(res.data.blocks);
     } catch (e: any) {
       setError(e.message);
@@ -476,7 +485,7 @@ const ReportsPage: React.FC = () => {
     setLoading(true);
     setBlockData(null);
     try {
-      const res = await userService.getBlockById(selectedBlock);
+      const res = await userService.getBlockById(selectedBlock,token);
       if (res.success) setBlockData(res.data);
     } catch (e: any) {
       setError(e.message);
@@ -493,7 +502,7 @@ const ReportsPage: React.FC = () => {
       setLoading(true);
       setDistrictReport(null);
       try {
-        const res = await userService.getDistrictReport(selectedDistrict, selectedType);
+        const res = await userService.getDistrictReport(selectedDistrict,token,selectedType);
         if (res.success) setDistrictReport(res.data);
       } catch (e: any) {
         setError(e.message);

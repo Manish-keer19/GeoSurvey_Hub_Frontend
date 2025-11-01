@@ -2,19 +2,25 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/bjp_logo.png";
 import HeaderImage from "../assets/mahatari_header.jpg";
-import { Mail, Phone, Globe, ChevronDown, Menu, X, User, LogOut } from "lucide-react";
+import { Mail, Phone, Globe, ChevronDown, Menu, X, User, LogOut, UserPlus, Users } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { logout } from "../store/authSlice";
 import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 const Navbar: React.FC = () => {
-  const [language, setLanguage] = useState<"EN" | "HI">("EN");
+  const { t, i18n } = useTranslation();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  const language = i18n.language === 'hi' ? 'HI' : 'EN';
+  const setLanguage = (lang: 'EN' | 'HI') => {
+    i18n.changeLanguage(lang === 'EN' ? 'en' : 'hi');
+  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -108,7 +114,7 @@ const Navbar: React.FC = () => {
               className="h-8 sm:h-10 lg:h-12 object-contain hidden xs:block"
             />
             <h1 className="text-white text-sm sm:text-lg lg:text-xl font-semibold whitespace-nowrap">
-              Mahatari Vandan Yojana
+              {t('navbar.title')}
             </h1>
           </div>
 
@@ -150,12 +156,36 @@ const Navbar: React.FC = () => {
                   <p className="text-xs text-gray-500">Code: {user?.code}</p>
                   <p className="text-xs text-gray-500">{user?.role}</p>
                 </div>
+                {user?.role === 'ADMIN' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        navigate('/register');
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      {t('navbar.registerUser')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/users');
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Users className="w-4 h-4" />
+                      {t('navbar.allUsers')}
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
-                  Logout
+                  {t('navbar.logout')}
                 </button>
               </div>
             </div>
@@ -164,7 +194,7 @@ const Navbar: React.FC = () => {
               onClick={() => navigate('/login')}
               className="bg-white text-orange-500 font-semibold rounded-md shadow-md hover:bg-orange-50 transition-all px-4 py-2 text-xs sm:text-sm w-full sm:w-auto text-center"
             >
-              Login
+              {t('navbar.login')}
             </button>
           )}
         </div>

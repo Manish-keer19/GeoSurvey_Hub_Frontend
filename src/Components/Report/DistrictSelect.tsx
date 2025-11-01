@@ -2,6 +2,8 @@ import React from "react";
 import { userService } from "../../service/user.service";
 import { Spinner } from "./LoaderComponents";
 import { ErrorMessage } from "./ErrorComponents";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 interface Props {
   selected: number | null;
@@ -10,15 +12,22 @@ interface Props {
 }
 
 export const DistrictSelect: React.FC<Props> = ({ selected, onChange, disabled }) => {
+
+    // const user = useSelector((state: any) => state.auth.user);
+  const token = useSelector((state: any) => state.auth.token);
+
   const [districts, setDistricts] = React.useState<{ district_id: number; district_name: string }[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   const fetchDistricts = async () => {
+    if(!token){
+      toast.error("token not found");
+    }
     setLoading(true);
     setError(null);
     try {
-      const res = await userService.getAllDistrict();
+      const res = await userService.getAllDistrict(token);
       if (res.success) {
         setDistricts(res.data);
       } else {

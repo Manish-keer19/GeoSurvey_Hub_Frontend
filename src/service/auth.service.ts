@@ -19,6 +19,29 @@ class AuthService {
     }
   }
 
+  public async registerUser(data: any, token: string) {
+    try {
+      const res = await axiosInstance.post("/auth/register-user", data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data;
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+
+  public async getAllUsers( token: string) {
+    try {
+      const res = await axiosInstance.get("/auth/all-users", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data;
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
  
 }
 

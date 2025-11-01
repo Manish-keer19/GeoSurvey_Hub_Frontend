@@ -7,6 +7,9 @@ import { loadFromStorage } from './store/authSlice';
 import Navbar from './Components/Navbar';
 import ReportsDashboard from './Components/Report/ReportsDashboard';
 import Login from './Components/auth/Login';
+import RegisterUser from './Components/auth/RegisterUser';
+import AllUsers from './Components/auth/AllUsers';
+import './i18n';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -32,6 +35,8 @@ function AppContent() {
         <Route path="/" element={<Navigate to="/reports" replace />} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/reports" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
+        <Route path="/register" element={<ProtectedRoute><RegisterUser /></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute><AllUsers /></ProtectedRoute>} />
       </Routes>
     </>
   );

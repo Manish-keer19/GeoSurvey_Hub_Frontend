@@ -13,6 +13,7 @@ import CooperativeSchemesAwareness from "../../Components/CooperativeSchemesAwar
 import BjpGovernmentSatisfactionChart from "../../Components/BjpGovernmentSatisfactionChart";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { useSelector } from "react-redux";
 
 interface DistrictReport {
   district_name: string;
@@ -22,6 +23,9 @@ interface DistrictReport {
 }
 
 export const DistrictReportPage: React.FC = () => {
+    // const user = useSelector((state: any) => state.auth.user);
+  const token = useSelector((state: any) => state.auth.token);
+
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
   const [type, setType] = useState<"ALL" | "R" | "U">("ALL");
   const [report, setReport] = useState<DistrictReport | null>(null);
@@ -34,7 +38,7 @@ export const DistrictReportPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await userService.getDistrictReport(selectedDistrict, type);
+      const res = await userService.getDistrictReport(selectedDistrict,token,type);
       if (res.success) {
         setReport(res.data);
       } else {
@@ -46,7 +50,6 @@ export const DistrictReportPage: React.FC = () => {
       setLoading(false);
     }
   };
-
   const downloadPDF = async () => {
     if (!reportRef.current || !report) return;
     setLoading(true);
