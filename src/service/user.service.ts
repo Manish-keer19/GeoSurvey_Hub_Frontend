@@ -66,13 +66,6 @@ interface BlockFull {
   [key: string]: any;
 }
 
-interface DistrictReport {
-  district_id: number;
-  district_name: string;
-  type: "ALL" | "R" | "U";
-  blockCount: number;
-  aggregated: Record<string, number>;
-}
 
 class UserService {
   // 1. Get all districts
@@ -117,9 +110,9 @@ class UserService {
     districtId: number,
     token: string,
     type: "ALL" | "R" | "U" = "ALL"
-  ): Promise<ApiResponse<DistrictReport>> {
+  ){
     try {
-      const res = await axiosInstance.get<ApiResponse<DistrictReport>>(
+      const res = await axiosInstance.get(
         `/districts/${districtId}/report`,
         { 
           params: { type },
