@@ -105,9 +105,27 @@ export const BlockReportPage: React.FC = () => {
     setLoadingReport(true);
     setReportError(null);
 
-
     try {
-      const res = await userService.getCombinedBlockReport(selectedBlockName, selectedDistrict!,token);
+      let res;
+      
+      if (blockType === "ALL") {
+        // Call combined API for ALL blocks
+        res = await userService.getCombinedBlockReport(selectedBlockName, selectedDistrict!, token);
+      } else {
+        // Call getBlockById API for R or U blocks
+        const selectedBlock = filteredBlocks.find(b => 
+          b.block_name.replace(/\s*\([RU]\)$/, "").trim() === selectedBlockName
+        );
+        
+        if (!selectedBlock) {
+          setReportError("Selected block not found");
+          setLoadingReport(false);
+          return;
+        }
+        
+        res = await userService.getBlockById(selectedBlock.bolck_Id, token);
+      }
+      
       if (res.success) {
         setBlockData(res.data);
       } else {
