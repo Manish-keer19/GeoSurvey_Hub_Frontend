@@ -5,7 +5,7 @@ import axiosInstance from "../service/axiosInstance";
 
 const DatawrapperMap = () => {
   const [iframeKey, setIframeKey] = useState(Date.now());
-  const [dynamicHeight, setDynamicHeight] = useState("300px"); // Reduced initial height for shorter view
+  const [dynamicHeight, setDynamicHeight] = useState("300px"); // Initial height; will be overridden by Datawrapper
   const [isLoading, setIsLoading] = useState(false); // Loading state for update
   const [isMapLoading, setIsMapLoading] = useState(true); // Loading state for map (initial and refresh)
   const chartId = "fGzC6";
@@ -49,62 +49,69 @@ const DatawrapperMap = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Optional: Listen for window resize to potentially refresh if needed (e.g., orientation change)
-  useEffect(() => {
-    const handleResize = () => {
-      // Throttle resize if needed, but for now, refresh on resize for better mobile responsiveness
-      const timeoutId = setTimeout(() => refreshMap(), 250);
-      return () => clearTimeout(timeoutId);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  // Removed resize listener to prevent unnecessary refreshes and improve performance on mobile/desktop
 
   return (
     <div 
-      className="w-full max-w-full overflow-hidden relative min-h-[300px]" // Responsive container with min-height
+      className="w-full max-w-full overflow-hidden relative min-h-[250px] sm:min-h-[300px] md:min-h-[400px] lg:min-h-[500px]" // Responsive min-heights for better scaling across devices
     >
-      {/* Loading Overlay for Map */}
+      {/* Loading Overlay for Map - Full coverage with subtle backdrop */}
       {(isLoading || isMapLoading) && (
         <div 
-          className="absolute inset-0 bg-white/80 flex flex-col justify-center items-center z-10"
+          className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col justify-center items-center z-10"
         >
-          <ClipLoader color="#3b82f6" size={50} />
-          <p className="mt-2.5 text-sm text-gray-600">
+          <ClipLoader color="#3b82f6" size={40} />
+          <p className="mt-2 text-sm text-gray-600 px-4 text-center leading-relaxed">
             {isLoading ? "Updating map..." : "Loading map..."}
           </p>
         </div>
       )}
 
-      <iframe
-        key={iframeKey}
-        title={`Datawrapper-${chartId}`}
-        src={`https://datawrapper.dwcdn.net/${chartId}/${version}/?lang=en`} // Force English language
-        scrolling="no"
-        frameBorder="0"
-        className={`w-full border-none h-[${dynamicHeight}] transition-all duration-300 ease-in-out `} // Dynamic height with Tailwind transition
-        loading="lazy"
-        onLoad={() => setTimeout(() => setIsMapLoading(false), 1000)} // Fallback delay to ensure content loads
-      />
+      {/* Responsive iframe wrapper - Full width, centered content, minimal top margin for better mobile fit */}
+      <div className="w-full flex items-center justify-center p-2 sm:p-4 mt-2 sm:mt-4">
+        <iframe
+          key={iframeKey}
+          title={`Datawrapper-${chartId}`}
+          src={`https://datawrapper.dwcdn.net/${chartId}/${version}/?lang=en`} // Force English language
+          scrolling="no"
+          frameBorder="0"
+          className="w-[40%] rounded-lg shadow-sm transition-all duration-300" // Full width, responsive, with subtle shadow for depth
+          loading="lazy"
+          onLoad={() => setTimeout(() => setIsMapLoading(false), 1000)} // Fallback delay to ensure content loads
+          style={{ 
+            height: dynamicHeight, // Use dynamic height from Datawrapper
+            minHeight: '250px', // Responsive min-height fallback
+            aspectRatio: '16/9' // Maintain a sensible aspect ratio on small screens if height not set yet
+          }}
+        />
+      </div>
 
-      {/* Refresh Button - Positioned in top center for better UI/UX */}
+      {/* Refresh Button - Responsive sizing, positioned consistently, with better touch target on mobile */}
       <button
         onClick={getdisctrictMapData}
         disabled={isLoading}
         className={`
-          absolute top-0 right-[2vw] -translate-x-1/2 z-20 px-3 py-1.5 rounded-md bg-blue-500 text-white border-none cursor-pointer text-sm
-          flex justify-center items-center gap-1.5 disabled:bg-gray-400 disabled:cursor-not-allowed
-          hover:bg-blue-600 active:bg-blue-700 transition-colors duration-200
-          ${isLoading ? 'opacity-80' : ''}
+          absolute top-3 right-3 z-20 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg bg-blue-500 text-white border-none cursor-pointer text-sm font-medium shadow-lg
+          flex justify-center items-center gap-1.5 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-70
+          hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 ease-in-out
+          min-w-[80px] sm:min-w-[90px] // Ensure touch-friendly width on mobile
+          ${isLoading ? 'opacity-90 scale-95' : ''}
         `}
       >
         {isLoading ? (
           <>
-            <ClipLoader color="#ffffff" size={16} />
-            Updating...
+            <ClipLoader color="#ffffff" size={14} />
+            <span className="hidden sm:inline">Updating...</span>
+            <span className="sm:hidden">Updating</span>
           </>
         ) : (
-          "Refresh"
+          <>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span className="hidden sm:inline">Refresh</span>
+            <span className="sm:hidden">Refresh</span>
+          </>
         )}
       </button>
     </div>
