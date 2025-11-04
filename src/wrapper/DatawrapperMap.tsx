@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 
 import { ClipLoader } from "react-spinners"; // Install: npm install react-spinners
@@ -9,29 +7,27 @@ const DatawrapperMap = () => {
   const [iframeKey, setIframeKey] = useState(Date.now());
   const [dynamicHeight, setDynamicHeight] = useState("300px"); // Reduced initial height for shorter view
   const [isLoading, setIsLoading] = useState(false); // Loading state for update
-  const [isIframeLoading, setIsIframeLoading] = useState(true); // Initial iframe load state
+  const [isMapLoading, setIsMapLoading] = useState(true); // Loading state for map (initial and refresh)
   const chartId = "fGzC6";
   const version = 1;
 
   const refreshMap = () => {
     setIframeKey(Date.now());
-    setIsIframeLoading(true); // Reset loading on refresh
   };
-
 
   const getdisctrictMapData = async () => {
     setIsLoading(true);
+    setIsMapLoading(true);
     try {
       await axiosInstance.get("/districts/get-district-map-data");
       refreshMap();
     } catch (error) {
       console.error("Error fetching district map data:", error);
+      setIsMapLoading(false); // Hide loader if API fails (no refresh)
     } finally {
       setIsLoading(false);
     }
-  }
-
-
+  };
 
   useEffect(() => {
     const handleMessage = (event: any) => {
@@ -43,7 +39,7 @@ const DatawrapperMap = () => {
               const newHeight = event.data["datawrapper-height"][key] + "px";
               iframes[i].style.height = newHeight;
               setDynamicHeight(newHeight); // Update state for re-renders if needed
-              setIsIframeLoading(false); // Mark as loaded once height is set
+              setIsMapLoading(false); // Mark as loaded once height is set
             }
           }
         }
@@ -64,22 +60,19 @@ const DatawrapperMap = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Handle initial iframe load
-  useEffect(() => {
-    setIsIframeLoading(true);
-  }, [iframeKey]);
-
   return (
     <div 
       className="w-full max-w-full overflow-hidden relative min-h-[300px]" // Responsive container with min-height
     >
-      {/* Loading Overlay for Iframe */}
-      {isIframeLoading && (
+      {/* Loading Overlay for Map */}
+      {(isLoading || isMapLoading) && (
         <div 
           className="absolute inset-0 bg-white/80 flex flex-col justify-center items-center z-10"
         >
           <ClipLoader color="#3b82f6" size={50} />
-          <p className="mt-2.5 text-sm text-gray-600">Loading map...</p>
+          <p className="mt-2.5 text-sm text-gray-600">
+            {isLoading ? "Updating map..." : "Loading map..."}
+          </p>
         </div>
       )}
 
@@ -91,27 +84,27 @@ const DatawrapperMap = () => {
         frameBorder="0"
         className={`w-full border-none h-[${dynamicHeight}] transition-all duration-300 ease-in-out `} // Dynamic height with Tailwind transition
         loading="lazy"
-        onLoad={() => setTimeout(() => setIsIframeLoading(false), 1000)} // Delay to ensure content loads
+        onLoad={() => setTimeout(() => setIsMapLoading(false), 1000)} // Fallback delay to ensure content loads
       />
 
-      {/* Refresh Button */}
+      {/* Refresh Button - Positioned in top center for better UI/UX */}
       <button
         onClick={getdisctrictMapData}
         disabled={isLoading}
         className={`
-          mt-2.5 px-4 py-2 rounded-lg bg-blue-500 text-white border-none cursor-pointer w-full text-sm
-          flex justify-center items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed
+          absolute top-0 right-[2vw] -translate-x-1/2 z-20 px-3 py-1.5 rounded-md bg-blue-500 text-white border-none cursor-pointer text-sm
+          flex justify-center items-center gap-1.5 disabled:bg-gray-400 disabled:cursor-not-allowed
           hover:bg-blue-600 active:bg-blue-700 transition-colors duration-200
           ${isLoading ? 'opacity-80' : ''}
         `}
       >
         {isLoading ? (
           <>
-            <ClipLoader color="#ffffff" size={20} />
+            <ClipLoader color="#ffffff" size={16} />
             Updating...
           </>
         ) : (
-          "Refresh Map"
+          "Refresh"
         )}
       </button>
     </div>
