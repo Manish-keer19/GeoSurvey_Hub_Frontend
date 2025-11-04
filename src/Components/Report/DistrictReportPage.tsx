@@ -31,6 +31,7 @@ export const DistrictReportPage: React.FC = () => {
   const token = useSelector((state: any) => state.auth.token);
 
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
+
   const [type, setType] = useState<"ALL" | "R" | "U">("ALL");
   const [report, setReport] = useState<DistrictReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,9 +83,16 @@ export const DistrictReportPage: React.FC = () => {
     return <FullPageLoader message="Loading district report..." />;
   }
 
+  const handleDistrictChange = (id: number) => {
+    setSelectedDistrict(id);
+    setReport(null);
+    setError(null);
+  };
+
   return (
     <div className="space-y-6">
-      <DistrictSelect selected={selectedDistrict} onChange={setSelectedDistrict} />
+      <DistrictSelect selected={selectedDistrict} onChange={handleDistrictChange} />
+      
 
       {selectedDistrict && (
         <div className="flex justify-center gap-6">

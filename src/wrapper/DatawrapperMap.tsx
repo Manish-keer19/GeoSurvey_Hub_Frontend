@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners"; // Install: npm install react-spinners
 import axiosInstance from "../service/axiosInstance";
 
 const DatawrapperMap = () => {
+  const navigate = useNavigate();
   const [iframeKey, setIframeKey] = useState(Date.now());
   const [dynamicHeight, setDynamicHeight] = useState("300px"); // Initial height; will be overridden by Datawrapper
   const [isLoading, setIsLoading] = useState(false); // Loading state for update
@@ -68,14 +69,14 @@ const DatawrapperMap = () => {
       )}
 
       {/* Responsive iframe wrapper - Full width, centered content, minimal top margin for better mobile fit */}
-      <div className="w-full flex items-center justify-center p-2 sm:p-4 mt-2 sm:mt-4">
+      <div className="w-full flex items-center justify-center p-2 sm:p-4 mt-16 sm:mt-4   ">
         <iframe
           key={iframeKey}
           title={`Datawrapper-${chartId}`}
           src={`https://datawrapper.dwcdn.net/${chartId}/${version}/?lang=en`} // Force English language
           scrolling="no"
           frameBorder="0"
-          className="w-[40%] rounded-lg shadow-sm transition-all duration-300" // Full width, responsive, with subtle shadow for depth
+          className="w-[70%] md:w-[60%] rounded-lg shadow-sm transition-all duration-300" // Full width, responsive, with subtle shadow for depth
           loading="lazy"
           onLoad={() => setTimeout(() => setIsMapLoading(false), 1000)} // Fallback delay to ensure content loads
           style={{ 
@@ -86,15 +87,26 @@ const DatawrapperMap = () => {
         />
       </div>
 
-      {/* Refresh Button - Responsive sizing, positioned consistently, with better touch target on mobile */}
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/reports')}
+        className="absolute top-2 left-2 sm:top-4 sm:left-4 z-20 px-2 py-1.5 sm:px-4 sm:py-2.5 rounded-lg bg-gray-600 text-white border-none cursor-pointer text-xs sm:text-sm font-medium shadow-lg flex justify-center items-center gap-1 sm:gap-1.5 hover:bg-gray-700 active:bg-gray-800 transition-all duration-200 ease-in-out min-w-[70px] sm:min-w-[90px]"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span className="hidden sm:inline">Back</span>
+      </button>
+
+      {/* Refresh Button */}
       <button
         onClick={getdisctrictMapData}
         disabled={isLoading}
         className={`
-          absolute top-3 right-3 z-20 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg bg-blue-500 text-white border-none cursor-pointer text-sm font-medium shadow-lg
-          flex justify-center items-center gap-1.5 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-70
+          absolute top-2 right-2 sm:top-4 sm:right-4 z-20 px-2 py-1.5 sm:px-4 sm:py-2.5 rounded-lg bg-blue-500 text-white border-none cursor-pointer text-xs sm:text-sm font-medium shadow-lg
+          flex justify-center items-center gap-1 sm:gap-1.5 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-70
           hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 ease-in-out
-          min-w-[80px] sm:min-w-[90px] // Ensure touch-friendly width on mobile
+          min-w-[70px] sm:min-w-[90px]
           ${isLoading ? 'opacity-90 scale-95' : ''}
         `}
       >

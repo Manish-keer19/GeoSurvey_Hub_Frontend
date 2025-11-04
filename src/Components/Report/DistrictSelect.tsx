@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 
 interface Props {
   selected: number | null;
-  onChange: (id: number) => void;
+  onChange: (id: number, name?: string) => void;
   disabled?: boolean;
 }
 
@@ -58,12 +58,20 @@ export const DistrictSelect: React.FC<Props> = ({ selected, onChange, disabled }
   }
 
   return (
+    <>
+       <label className="block text-sm font-medium text-gray-700">
+            Select Disctrict
+          </label>
     <select
       className="w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
       value={selected || ""}
-      onChange={(e) => onChange(Number(e.target.value))}
+      onChange={(e) => {
+        const selectedId = Number(e.target.value);
+        const selectedDistrict = districts.find(d => d.district_id === selectedId);
+        onChange(selectedId, selectedDistrict?.district_name || "");
+      }}
       disabled={disabled}
-    >
+      >
       <option value="">-- Select District --</option>
       {districts.map((d) => (
         <option key={d.district_id} value={d.district_id}>
@@ -71,5 +79,6 @@ export const DistrictSelect: React.FC<Props> = ({ selected, onChange, disabled }
         </option>
       ))}
     </select>
+      </>
   );
 };

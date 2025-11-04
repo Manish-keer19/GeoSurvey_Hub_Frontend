@@ -29,6 +29,7 @@ export const BlockReportPage: React.FC = () => {
 
   // console.log("Logged in token in BlockReportPage:", token);
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
+  const [selectedDistrictName, setSelectedDistrictName] = useState<string>("");
   const [allBlocks, setAllBlocks] = useState<Block[]>([]);
   const [filteredBlocks, setFilteredBlocks] = useState<Block[]>([]);
   const [selectedBlockName, setSelectedBlockName] = useState<string>("");
@@ -42,8 +43,9 @@ export const BlockReportPage: React.FC = () => {
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Load blocks
-  const handleDistrictChange = async (id: number) => {
+  const handleDistrictChange = async (id: number, districtName: string = "") => {
     setSelectedDistrict(id);
+    setSelectedDistrictName(districtName);
     setSelectedBlockName("");
     setBlockData(null);
     setAllBlocks([]);
@@ -166,7 +168,9 @@ export const BlockReportPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <DistrictSelect selected={selectedDistrict} onChange={handleDistrictChange} />
+      <DistrictSelect selected={selectedDistrict} onChange={(id, name) => handleDistrictChange(id, name || "")} />
+      
+    
 
       {/* Loading blocks */}
       {loadingBlocks && <BlockFetchingLoader />}
@@ -175,7 +179,7 @@ export const BlockReportPage: React.FC = () => {
       {blocksError && (
         <ErrorMessage 
           message={blocksError} 
-          onRetry={() => selectedDistrict && handleDistrictChange(selectedDistrict)} 
+          onRetry={() => selectedDistrict && handleDistrictChange(selectedDistrict, selectedDistrictName)} 
         />
       )}
 
@@ -215,18 +219,23 @@ export const BlockReportPage: React.FC = () => {
 
       {/* BLOCK SELECT – ONLY CLEAN NAME */}
       {groupedBlockNames.length > 0 && !loadingBlocks && !blocksError && (
-        <select
-          className="w-full p-3 border rounded-lg"
-          value={selectedBlockName}
-          onChange={(e) => setSelectedBlockName(e.target.value)}
-        >
-          <option value="">-- Select Block --</option>
-          {groupedBlockNames.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Select Block
+          </label>
+          <select
+            className="w-full p-3 border rounded-lg"
+            value={selectedBlockName}
+            onChange={(e) => setSelectedBlockName(e.target.value)}
+          >
+            <option value="">-- Select Block --</option>
+            {groupedBlockNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
       
       {/* No blocks available */}
