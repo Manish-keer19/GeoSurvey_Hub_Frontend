@@ -11,12 +11,20 @@ const resources = {
       'navbar.logout': 'Logout',
       'navbar.registerUser': 'Register User',
       'navbar.allUsers': 'All Users',
+      'navbar.districtMap': 'District Map',
       
       // Login Page
       'login.title': 'Login',
       'login.subtitle': 'Select your role and enter the 4-digit code',
       'login.role': 'Role',
       'login.code': 'Code',
+      'login.reports': 'Reports',
+      'login.selectReports': 'Please select a report type',
+      
+      // Reports
+      'reports.mahatariVandan': 'Mahatari Vandan Yojana Report',
+      'reports.callCenter': 'Call Center Report',
+      'reports.whatsappObd': 'WhatsApp/OBD/SMS Report',
       'login.selectRole': 'Please select a role',
       'login.codeRequired': 'Code is required',
       'login.exactDigits': 'Enter exactly 4 digits',
@@ -83,12 +91,20 @@ const resources = {
       'navbar.logout': 'लॉगआउट',
       'navbar.registerUser': 'उपयोगकर्ता पंजीकरण',
       'navbar.allUsers': 'सभी उपयोगकर्ता',
+      'navbar.districtMap': 'जिला मानचित्र',
       
       // Login Page
       'login.title': 'लॉगिन',
       'login.subtitle': 'अपनी भूमिका चुनें और 4-अंकीय कोड दर्ज करें',
       'login.role': 'भूमिका',
       'login.code': 'कोड',
+      'login.reports': 'रिपोर्ट',
+      'login.selectReports': 'कृपया रिपोर्ट प्रकार चुनें',
+      
+      // Reports
+      'reports.mahatariVandan': 'महतारी वंदन योजना रिपोर्ट',
+      'reports.callCenter': 'कॉल सेंटर रिपोर्ट',
+      'reports.whatsappObd': 'व्हाट्सऐप/ओबीडी/एसएमएस रिपोर्ट',
       'login.selectRole': 'कृपया एक भूमिका चुनें',
       'login.codeRequired': 'कोड आवश्यक है',
       'login.exactDigits': 'बिल्कुल 4 अंक दर्ज करें',
@@ -154,6 +170,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    lng: 'hi', // Set Hindi as default
     fallbackLng: 'en',
     debug: false,
     interpolation: {

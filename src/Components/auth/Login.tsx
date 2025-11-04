@@ -8,10 +8,11 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 type Role = 'ADMIN' | 'DISTRICT_USER' | 'VIDHANSABHA_USER' | 'LOKSABHA_USER';
-
+type Reports = 'Mahatari Vandan Yojana Report' | 'Call Center Report' | 'WhatsApp/OBD/SMS Report';
 type FormData = {
   role: Role;
   code: string;
+  reports: Reports;
 };
 
 function Login() {
@@ -28,7 +29,7 @@ function Login() {
     formState: { errors },
     reset,
   } = useForm<FormData>({
-    defaultValues: { role: 'ADMIN' },
+    defaultValues: { role: 'ADMIN', reports: 'Mahatari Vandan Yojana Report' },
   });
 
   const onSubmit = async (data: FormData) => {
@@ -40,6 +41,7 @@ function Login() {
       const payload = {
         role: data.role,
         code: data.code,
+        reports: data.reports,
       };
 
       const res = await authService.login(payload);
@@ -71,17 +73,34 @@ function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm">
-        <h2 className="text-3xl font-bold text-center text-gray-800 mb-2">
+        <h2 className="text-3xl font-bold text-center mb-2" style={{color: '#EF7808'}}>
           {t('login.title')}
         </h2>
-        <p className="text-center text-gray-600 mb-6">
+        <p className="text-center mb-6" style={{color: '#EF7808'}}>
           {t('login.subtitle')}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Role Dropdown */}
+          {/* Reports Dropdown */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1" style={{color: '#EF7808'}}>
+              {t('login.reports')}
+            </label>
+            <select
+              {...register('reports', { required: t('login.selectReports') })}
+              disabled={isLoading}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-indigo-600 focus:outline-none transition-all"
+            >
+              <option value="Mahatari Vandan Yojana Report">{t('reports.mahatariVandan')}</option>
+              <option value="Call Center Report">{t('reports.callCenter')}</option>
+              <option value="WhatsApp/OBD/SMS Report">{t('reports.whatsappObd')}</option>
+            </select>
+            {errors.reports && (
+              <p className="mt-1 text-sm text-red-600">{errors.reports.message}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{color: '#EF7808'}}>
               {t('login.role')}
             </label>
             <select
@@ -100,7 +119,7 @@ function Login() {
 
           {/* 4-Digit Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium mb-1" style={{color: '#EF7808'}}>
               {t('login.code')}
             </label>
             <input
@@ -142,7 +161,10 @@ function Login() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold text-lg rounded-xl transition-all duration-200 flex items-center justify-center"
+            className="w-full py-3 text-white font-semibold text-lg rounded-xl transition-all duration-200 flex items-center justify-center hover:bg-orange-600"
+            style={{backgroundColor: '#EF7808'}}
+            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#d66a07'}
+            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#EF7808'}
           >
             {isLoading ? (
               <span className="flex items-center gap-2">

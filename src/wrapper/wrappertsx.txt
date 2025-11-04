@@ -1,0 +1,125 @@
+import { useEffect, useState } from "react";
+import axiosInstance from "../service/axiosInstance";
+import toast from "react-hot-toast";
+import { ClipLoader } from "react-spinners"; // Install: npm install react-spinners
+
+const DatawrapperMap = () => {
+  const [iframeKey, setIframeKey] = useState(Date.now());
+  const [dynamicHeight, setDynamicHeight] = useState("300px"); // Reduced initial height for shorter view
+  const [isLoading, setIsLoading] = useState(false); // Loading state for update
+  const [isIframeLoading, setIsIframeLoading] = useState(true); // Initial iframe load state
+  const chartId = "fGzC6";
+  const version = 1;
+
+  const refreshMap = () => {
+    setIframeKey(Date.now());
+    setIsIframeLoading(true); // Reset loading on refresh
+  };
+
+  const updateWrapper = async () => {
+    setIsLoading(true);
+    try {
+      const response: any = await axiosInstance.get("/districts/update-wrapper");
+
+      if (response.data.success) {
+        console.log("Wrapper update response:", response.data);
+        toast.success("Map data updated successfully!");
+        refreshMap(); // Refresh the iframe to reflect updated data
+      } else {
+        console.error("Failed to update wrapper:", response.data);
+        toast.error("Failed to update map data.");
+      }
+    } catch (error) {
+      console.error("Error updating wrapper:", error);
+      toast.error("Error updating map data.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleMessage = (event: any) => {
+      if (event.data["datawrapper-height"]) {
+        const iframes = document.querySelectorAll("iframe");
+        for (const key in event.data["datawrapper-height"]) {
+          for (let i = 0; i < iframes.length; i++) {
+            if (iframes[i].contentWindow === event.source) {
+              const newHeight = event.data["datawrapper-height"][key] + "px";
+              iframes[i].style.height = newHeight;
+              setDynamicHeight(newHeight); // Update state for re-renders if needed
+              setIsIframeLoading(false); // Mark as loaded once height is set
+            }
+          }
+        }
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // Optional: Listen for window resize to potentially refresh if needed (e.g., orientation change)
+  useEffect(() => {
+    const handleResize = () => {
+      // Throttle resize if needed, but for now, refresh on resize for better mobile responsiveness
+      const timeoutId = setTimeout(() => refreshMap(), 250);
+      return () => clearTimeout(timeoutId);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Handle initial iframe load
+  useEffect(() => {
+    setIsIframeLoading(true);
+  }, [iframeKey]);
+
+  return (
+    <div 
+      className="w-full max-w-full overflow-hidden relative min-h-[300px]" // Responsive container with min-height
+    >
+      {/* Loading Overlay for Iframe */}
+      {isIframeLoading && (
+        <div 
+          className="absolute inset-0 bg-white/80 flex flex-col justify-center items-center z-10"
+        >
+          <ClipLoader color="#3b82f6" size={50} />
+          <p className="mt-2.5 text-sm text-gray-600">Loading map...</p>
+        </div>
+      )}
+
+      <iframe
+        key={iframeKey}
+        title={`Datawrapper-${chartId}`}
+        src={`https://datawrapper.dwcdn.net/${chartId}/${version}/?lang=en`} // Force English language
+        scrolling="no"
+        frameBorder="0"
+        className={`w-full border-none h-[${dynamicHeight}] transition-all duration-300 ease-in-out `} // Dynamic height with Tailwind transition
+        loading="lazy"
+        onLoad={() => setTimeout(() => setIsIframeLoading(false), 1000)} // Delay to ensure content loads
+      />
+
+      {/* Refresh Button */}
+      <button
+        onClick={updateWrapper}
+        disabled={isLoading}
+        className={`
+          mt-2.5 px-4 py-2 rounded-lg bg-blue-500 text-white border-none cursor-pointer w-full text-sm
+          flex justify-center items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed
+          hover:bg-blue-600 active:bg-blue-700 transition-colors duration-200
+          ${isLoading ? 'opacity-80' : ''}
+        `}
+      >
+        {isLoading ? (
+          <>
+            <ClipLoader color="#ffffff" size={20} />
+            Updating...
+          </>
+        ) : (
+          "Refresh Map"
+        )}
+      </button>
+    </div>
+  );
+};
+
+export default DatawrapperMap;

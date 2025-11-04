@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Logo from "../assets/bjp_logo.png";
 import HeaderImage from "../assets/mahatari_header.jpg";
-import { Mail, Phone, Globe, ChevronDown, Menu, X, User, LogOut, UserPlus, Users } from "lucide-react";
+import { Mail, Phone, Globe, ChevronDown, Menu, X, User, LogOut, UserPlus, Users, Map } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { logout } from "../store/authSlice";
 import { toast } from "react-hot-toast";
@@ -102,21 +102,23 @@ const Navbar: React.FC = () => {
       <nav className="bg-orange-500 flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-6 lg:px-8 py-2 sm:py-3 fixed top-7 sm:top-9 left-0 right-0 z-40 shadow-md">
         {/* Left: Logo and Branding */}
         <div className="flex items-center justify-between w-full sm:w-auto">
+          <Link to={"/"}>
           <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
             <img
               src={Logo}
               alt="BJP Logo"
               className="w-8 h-8 sm:w-10 sm:h-10 lg:w-11 lg:h-11 object-contain"
-            />
+              />
             <img
               src={HeaderImage}
               alt="Mahatari Header"
               className="h-8 sm:h-10 lg:h-12 object-contain hidden xs:block"
-            />
+              />
             <h1 className="text-white text-sm sm:text-lg lg:text-xl font-semibold whitespace-nowrap">
               {t('navbar.title')}
             </h1>
           </div>
+              </Link>
 
           {/* Mobile Menu Button */}
           <button
@@ -156,6 +158,16 @@ const Navbar: React.FC = () => {
                   <p className="text-xs text-gray-500">Code: {user?.code}</p>
                   <p className="text-xs text-gray-500">{user?.role}</p>
                 </div>
+                <button
+                  onClick={() => {
+                    navigate('/chart-data');
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <Map className="w-4 h-4" />
+                  {t('navbar.districtMap')}
+                </button>
                 {user?.role === 'ADMIN' && (
                   <>
                     <button

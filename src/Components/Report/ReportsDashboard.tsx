@@ -55,8 +55,9 @@ export default function ReportsDashboard() {
       <button
         onClick={handleTabClick}
         disabled={loadingTab}
-        className={`px-4 py-2 rounded-md font-medium transition-all disabled:opacity-50 ${activeTab === tab ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"
+        className={`px-4 py-2 rounded-md font-medium transition-all disabled:opacity-50 ${activeTab === tab ? "text-white" : "hover:bg-gray-100"
           }`}
+        style={activeTab === tab ? {backgroundColor: '#3b954b'} : {color: '#3b954b'}}
       >
         {tab === 'block' ? t('reports.blockReport') : tab === 'district' ? t('reports.districtReport') : tab === 'vidhansabha' ? t('reports.vidhansabha') : t('reports.loksabha')}
       </button>
@@ -66,7 +67,7 @@ export default function ReportsDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 mt-[12vh] md:mt-[20vh]">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-6 sm:p-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-indigo-700">{t('reports.title')}</h1>
+        <h1 className="text-3xl font-bold text-center mb-8" style={{color: '#3b954b'}}>{t('reports.title')}</h1>
 
         <div className="flex justify-center gap-4 mb-8 flex-wrap">
           {availableTabs.map(tab => (
