@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 /* Shimmer animation for loading states */
 @keyframes shimmer {
   0% { transform: translateX(-100%); }

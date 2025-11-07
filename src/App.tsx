@@ -13,6 +13,8 @@ import './i18n';
 import DatawrapperMap from './wrapper/DatawrapperMap';
 
 
+
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
@@ -35,6 +37,7 @@ function AppContent() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Navigate to="/reports" replace />} />
+      
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/chart-data" element={<ProtectedRoute><DatawrapperMap/></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
@@ -56,4 +59,3 @@ function App() {
 }
 
 export default App;
-

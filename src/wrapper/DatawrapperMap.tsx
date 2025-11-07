@@ -1,22 +1,31 @@
+
+
+
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipLoader } from "react-spinners"; // Install: npm install react-spinners
+import { ClipLoader } from "react-spinners";
 import axiosInstance from "../service/axiosInstance";
 
 const DatawrapperMap = () => {
   const navigate = useNavigate();
   const [iframeKey, setIframeKey] = useState(Date.now());
-  const [dynamicHeight, setDynamicHeight] = useState("300px"); // Initial height; will be overridden by Datawrapper
-  const [isLoading, setIsLoading] = useState(false); // Loading state for update
-  const [isMapLoading, setIsMapLoading] = useState(true); // Loading state for map (initial and refresh)
+  const [dynamicHeight, setDynamicHeight] = useState("350px");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMapLoading, setIsMapLoading] = useState(true);
   const chartId = "fGzC6";
   const version = 1;
 
+  // Shared width classes for perfect alignment (map + controls)
+  const widthClasses = "w-[95%] sm:w-[85%] md:w-[75%] lg:w-[65%] xl:w-[60%]";
+
+  // 🔁 Refresh iframe (forces reload of map)
   const refreshMap = () => {
     setIframeKey(Date.now());
   };
 
-  const getdisctrictMapData = async () => {
+  // 📡 Fetch district data before refreshing map
+  const getDistrictMapData = async () => {
     setIsLoading(true);
     setIsMapLoading(true);
     try {
@@ -24,14 +33,15 @@ const DatawrapperMap = () => {
       refreshMap();
     } catch (error) {
       console.error("Error fetching district map data:", error);
-      setIsMapLoading(false); // Hide loader if API fails (no refresh)
+      setIsMapLoading(false);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 🧩 Handle Datawrapper height messages
   useEffect(() => {
-    const handleMessage = (event: any) => {
+    const handleMessage = (event: MessageEvent) => {
       if (event.data["datawrapper-height"]) {
         const iframes = document.querySelectorAll("iframe");
         for (const key in event.data["datawrapper-height"]) {
@@ -39,8 +49,8 @@ const DatawrapperMap = () => {
             if (iframes[i].contentWindow === event.source) {
               const newHeight = event.data["datawrapper-height"][key] + "px";
               iframes[i].style.height = newHeight;
-              setDynamicHeight(newHeight); // Update state for re-renders if needed
-              setIsMapLoading(false); // Mark as loaded once height is set
+              setDynamicHeight(newHeight);
+              setIsMapLoading(false);
             }
           }
         }
@@ -50,82 +60,95 @@ const DatawrapperMap = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Removed resize listener to prevent unnecessary refreshes and improve performance on mobile/desktop
-
   return (
-    <div 
-      className="w-full max-w-full overflow-hidden relative min-h-[250px] sm:min-h-[300px] md:min-h-[400px] lg:min-h-[500px]" // Responsive min-heights for better scaling across devices
+    <div
+      className="
+        w-full flex flex-col items-center
+        min-h-[250px] sm:min-h-[350px] md:min-h-[450px] lg:min-h-[550px]
+        px-4 sm:px-6 lg:px-8 py-8
+      "
     >
-      {/* Loading Overlay for Map - Full coverage with subtle backdrop */}
-      {(isLoading || isMapLoading) && (
-        <div 
-          className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col justify-center items-center z-10"
+      {/* 🛠️ Controls bar – aligned to map width, no overlap guaranteed */}
+      <div className={`${widthClasses} flex justify-between mb-5`}>
+        {/* ⬅️ Back Button */}
+        <button
+          onClick={() => navigate("/reports")}
+          className="
+            flex items-center gap-1.5 sm:gap-2 px-3.5 py-2.5 rounded-lg
+            bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white
+            text-xs sm:text-sm font-medium shadow-lg transition-all
+          "
         >
-          <ClipLoader color="#3b82f6" size={40} />
-          <p className="mt-2 text-sm text-gray-600 px-4 text-center leading-relaxed">
-            {isLoading ? "Updating map..." : "Loading map..."}
-          </p>
-        </div>
-      )}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="hidden sm:inline">Back</span>
+        </button>
 
-      {/* Responsive iframe wrapper - Full width, centered content, minimal top margin for better mobile fit */}
-      <div className="w-full flex items-center justify-center p-2 sm:p-4 mt-16 sm:mt-4   ">
+        {/* 🔁 Refresh Button */}
+        <button
+          onClick={getDistrictMapData}
+          disabled={isLoading}
+          className={`
+            flex items-center gap-1.5 sm:gap-2 px-3.5 py-2.5 rounded-lg
+            text-xs sm:text-sm font-medium shadow-lg transition-all duration-200
+            ${isLoading 
+              ? "bg-gray-400 cursor-not-allowed" 
+              : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white"
+            }
+          `}
+        >
+          {isLoading ? (
+            <>
+              <ClipLoader color="#ffffff" size={14} />
+              <span className="hidden sm:inline">Updating...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="hidden sm:inline">Refresh</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* 🗺️ Map container – fully responsive */}
+      <div className={`${widthClasses} relative overflow-hidden rounded-xl shadow-xl`}>
+        {/* 🔄 Loading overlay */}
+        {(isLoading || isMapLoading) && (
+          <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col justify-center items-center z-10">
+            <ClipLoader color="#3b82f6" size={48} />
+            <p className="mt-3 text-base text-gray-700 font-medium">
+              {isLoading ? "Updating map data..." : "Loading map..."}
+            </p>
+          </div>
+        )}
+
+        {/* 🗺️ Responsive iframe */}
         <iframe
           key={iframeKey}
           title={`Datawrapper-${chartId}`}
-          src={`https://datawrapper.dwcdn.net/${chartId}/${version}/?lang=en`} // Force English language
+          src={`https://datawrapper.dwcdn.net/${chartId}/${version}/?lang=en`}
           scrolling="no"
           frameBorder="0"
-          className="w-[70%] md:w-[60%] rounded-lg shadow-sm transition-all duration-300" // Full width, responsive, with subtle shadow for depth
           loading="lazy"
-          onLoad={() => setTimeout(() => setIsMapLoading(false), 1000)} // Fallback delay to ensure content loads
-          style={{ 
-            height: dynamicHeight, // Use dynamic height from Datawrapper
-            minHeight: '250px', // Responsive min-height fallback
-            aspectRatio: '16/9' // Maintain a sensible aspect ratio on small screens if height not set yet
+          className="w-full transition-all duration-500 ease-out"
+          style={{
+            height: dynamicHeight,
+            minHeight: "350px",
           }}
+          onLoad={() => setTimeout(() => setIsMapLoading(false), 1000)}
         />
       </div>
 
-      {/* Back Button */}
-      <button
-        onClick={() => navigate('/reports')}
-        className="absolute top-2 left-2 sm:top-4 sm:left-4 z-20 px-2 py-1.5 sm:px-4 sm:py-2.5 rounded-lg bg-gray-600 text-white border-none cursor-pointer text-xs sm:text-sm font-medium shadow-lg flex justify-center items-center gap-1 sm:gap-1.5 hover:bg-gray-700 active:bg-gray-800 transition-all duration-200 ease-in-out min-w-[70px] sm:min-w-[90px]"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        <span className="hidden sm:inline">Back</span>
-      </button>
-
-      {/* Refresh Button */}
-      <button
-        onClick={getdisctrictMapData}
-        disabled={isLoading}
-        className={`
-          absolute top-2 right-2 sm:top-4 sm:right-4 z-20 px-2 py-1.5 sm:px-4 sm:py-2.5 rounded-lg bg-blue-500 text-white border-none cursor-pointer text-xs sm:text-sm font-medium shadow-lg
-          flex justify-center items-center gap-1 sm:gap-1.5 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-70
-          hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 ease-in-out
-          min-w-[70px] sm:min-w-[90px]
-          ${isLoading ? 'opacity-90 scale-95' : ''}
-        `}
-      >
-        {isLoading ? (
-          <>
-            <ClipLoader color="#ffffff" size={14} />
-            <span className="hidden sm:inline">Updating...</span>
-            <span className="sm:hidden">Updating</span>
-          </>
-        ) : (
-          <>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span className="hidden sm:inline">Refresh</span>
-            <span className="sm:hidden">Refresh</span>
-          </>
-        )}
-      </button>
+      {/* 💡 Optional tip for even cleaner look */}
+      {/* <p className="mt-6 text-xs text-gray-500 max-w-3xl text-center px-4">
+        * For zero header/footer (no Datawrapper branding), republish the chart in Datawrapper with 
+        <span className="font-medium"> "Plain" mode</span> enabled in Step 4 → Embed → Plain. 
+        Then replace the src URL with the plain version.
+      </p> */}
     </div>
   );
 };

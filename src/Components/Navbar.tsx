@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated, selectedReport } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -115,7 +115,7 @@ const Navbar: React.FC = () => {
               className="h-8 sm:h-10 lg:h-12 object-contain hidden xs:block"
               />
             <h1 className="text-white text-sm sm:text-lg lg:text-xl font-semibold whitespace-nowrap">
-              {t('navbar.title')}
+              {selectedReport || t('navbar.title')}
             </h1>
           </div>
               </Link>
