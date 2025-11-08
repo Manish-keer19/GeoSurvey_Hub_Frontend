@@ -12,6 +12,11 @@ const resources = {
       'navbar.registerUser': 'Register User',
       'navbar.allUsers': 'All Users',
       'navbar.districtMap': 'District Map',
+      'navbar.home': 'Home',
+      'navbar.reports': 'Reports',
+      'navbar.callCenter': 'Call Center',
+      'navbar.whatsappObd': 'WhatsApp/OBD/SMS',
+      'navbar.dashboard': 'Dashboard',
       
       // Login Page
       'login.title': 'Login',
@@ -92,6 +97,11 @@ const resources = {
       'navbar.registerUser': 'उपयोगकर्ता पंजीकरण',
       'navbar.allUsers': 'सभी उपयोगकर्ता',
       'navbar.districtMap': 'जिला मानचित्र',
+      'navbar.home': 'होम',
+      'navbar.reports': 'रिपोर्ट',
+      'navbar.callCenter': 'कॉल सेंटर',
+      'navbar.whatsappObd': 'व्हाट्सऐप/ओबीडी/एसएमएस',
+      'navbar.dashboard': 'डैशबोर्ड',
       
       // Login Page
       'login.title': 'लॉगिन',

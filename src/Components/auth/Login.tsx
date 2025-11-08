@@ -92,11 +92,7 @@ function Login() {
         <p className="text-center mb-4" style={{color: '#EF7808'}}>
           {t('login.subtitle')}
         </p>
-        <div className="text-center mb-6 p-3 bg-orange-50 rounded-lg border border-orange-200">
-          <p className="text-sm font-medium" style={{color: '#EF7808'}}>
-            Selected: {selectedReport}
-          </p>
-        </div>
+        
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Reports Dropdown */}

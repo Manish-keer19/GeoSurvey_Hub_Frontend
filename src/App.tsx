@@ -41,6 +41,7 @@ function AppContent() {
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/chart-data" element={<ProtectedRoute><DatawrapperMap/></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
+   
         <Route path="/register" element={<ProtectedRoute><RegisterUser /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><AllUsers /></ProtectedRoute>} />
       </Routes>

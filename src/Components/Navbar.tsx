@@ -99,9 +99,10 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* ───── MAIN NAVBAR ───── */}
-      <nav className="bg-orange-500 flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-6 lg:px-8 py-2 sm:py-3 fixed top-7 sm:top-9 left-0 right-0 z-40 shadow-md">
-        {/* Left: Logo and Branding */}
-        <div className="flex items-center justify-between w-full sm:w-auto">
+      <nav className="bg-orange-500 px-3 sm:px-6 lg:px-8 py-2 sm:py-3 fixed top-7 sm:top-9 left-0 right-0 z-40 shadow-md">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full">
+          {/* Left: Logo and Branding */}
+          <div className="flex items-center justify-between w-full sm:w-auto">
           <Link to={"/"}>
           <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
             <img
@@ -117,28 +118,28 @@ const Navbar: React.FC = () => {
             <h1 className="text-white text-sm sm:text-lg lg:text-xl font-semibold whitespace-nowrap">
               {selectedReport || t('navbar.title')}
             </h1>
+            </div>
+                </Link>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="sm:hidden text-white p-1"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
           </div>
-              </Link>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="sm:hidden text-white p-1"
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
-        </div>
+         
 
-        {/* Right: User Menu or Login Button */}
-        <div
-          className={`w-full sm:w-auto mt-2 sm:mt-0 ${
+          {/* Right: User Menu or Login Button */}
+          <div className={`w-full sm:w-auto ${
             isMobileMenuOpen ? "flex" : "hidden sm:flex"
-          } justify-end pb-2 sm:pb-0 border-t border-orange-400 sm:border-none pt-2 sm:pt-0`}
-        >
+          } justify-end mt-2 sm:mt-0`}>
           {isAuthenticated ? (
             <div className="relative">
               <button
@@ -209,6 +210,7 @@ const Navbar: React.FC = () => {
               {t('navbar.login')}
             </button>
           )}
+          </div>
         </div>
       </nav>
 
