@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ClipLoader } from "react-spinners";
 import axiosInstance from "../service/axiosInstance";
 import { districts } from "../constants/district";
+import toast from "react-hot-toast";
 
 const DatawrapperMap = () => {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ const DatawrapperMap = () => {
     });
     setDistrictValues(newValues);
     setEditingDistrict(null);
+    setHideTableAfterSubmit(false);
   }, [loading]);
 
   const clearAllDistricts = useCallback(() => {
@@ -89,7 +91,7 @@ const DatawrapperMap = () => {
       return val && /^\d{2}$/.test(val) && parseInt(val, 10) >= 10 && parseInt(val, 10) <= 99;
     });
     if (!allValid) {
-      alert('All values must be two-digit numbers between 10 and 99.');
+    toast.error('All values must be two-digit numbers between 10 and 99.');
       return;
     }
     
@@ -104,17 +106,17 @@ const DatawrapperMap = () => {
       }));
       console.log('Submitting data:', data);
       await axiosInstance.post('/districts/update-district-map', { data });
-      alert('District values submitted successfully!');
+      toast.success('District values submitted successfully!');
       setEditingDistrict(null);
-      clearAllDistricts();
+      setDistrictValues({});
       refreshMap();
     } catch (error) {
       console.error('Error submitting district values:', error);
-      alert('Failed to submit district values');
+      toast.error('Failed to submit district values');
     } finally {
       setIsSubmitting(false);
     }
-  }, [districtValues, loading, refreshMap, clearAllDistricts]);
+  }, [districtValues, loading, refreshMap]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
